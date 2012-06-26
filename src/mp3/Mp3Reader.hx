@@ -54,9 +54,31 @@ class Mp3Reader {
 
             do {
                 while (input.readByte() != 0xff) {}
-            } while ((b = input.readByte()) & 0xf0 != 0xf0);
+            } while ((b = input.readByte()) & 0xf8 != 0xf8);
+
+            var layerIndex = (b >> 1) & 0x3;
+            var hasCrc = b & 1 == 1;
+
+            b = input.readByte();
+
+            var bitrateIndex = (b >> 4) & 0xf;
+            var samplingFrequencyIndex = (b >> 2) & 0x2;
+            var hasPadding = (b >> 1) & 1 == 1;
+            var privateBit = b & 1 == 1;
+
+            b = input.readByte();
+            var modeIndex = (b >> 6) & 0x2;
+            var modeExtensionIndex = (b >> 4) & 0x2;
+            var copyright = (b >> 3) & 1 == 1;
+            var original = (b >> 2) & 1 == 1;
+            var emphasisIndex = b & 0x2;
 
             var frame = new Mp3Frame();
+            frame.hasCrc = hasCrc;
+            frame.hasPadding = hasPadding;
+            frame.privateBit = privateBit;
+            frame.copyright = copyright;
+            frame.original = original;
 
             return Mp3Element.Frame(frame);
         } catch (eof:Eof) {
