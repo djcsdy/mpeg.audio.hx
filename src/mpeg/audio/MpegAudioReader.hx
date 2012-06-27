@@ -1,10 +1,10 @@
-package mp3;
+package mpeg.audio;
 
 import haxe.io.Eof;
 import haxe.Int32;
 import haxe.io.Input;
 
-class Mp3Reader {
+class MpegAudioReader {
     var input:Input;
     var atStart:Bool;
     var atEnd:Bool;
@@ -19,15 +19,15 @@ class Mp3Reader {
         atEnd = false;
     }
 
-    public function readMp3 () {
+    public function readAll () {
         if (!atStart) {
-            throw "Cannot combine calls to readElement and readMp3";
+            throw "Cannot combine calls to readNext and readAll";
         }
 
-        var frames:Array<Mp3Frame> = [];
+        var frames:Array<Frame> = [];
 
         while (true) {
-            var element = readElement();
+            var element = readNext();
 
             switch (element) {
                 case Frame(frame):
@@ -38,13 +38,13 @@ class Mp3Reader {
             }
         }
 
-        var mp3 = new Mp3();
-        mp3.frames = frames;
+        var audio = new MpegAudio();
+        audio.frames = frames;
 
-        return mp3;
+        return audio;
     }
 
-    public function readElement () {
+    public function readNext () {
         if (atEnd) {
             throw new Eof();
         }
@@ -73,16 +73,16 @@ class Mp3Reader {
             var original = (b >> 2) & 1 == 1;
             var emphasisIndex = b & 0x2;
 
-            var frame = new Mp3Frame();
+            var frame = new Frame();
             frame.hasCrc = hasCrc;
             frame.hasPadding = hasPadding;
             frame.privateBit = privateBit;
             frame.copyright = copyright;
             frame.original = original;
 
-            return Mp3Element.Frame(frame);
+            return Element.Frame(frame);
         } catch (eof:Eof) {
-            return Mp3Element.End;
+            return Element.End;
         }
     }
 }

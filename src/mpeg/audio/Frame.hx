@@ -1,6 +1,6 @@
-package mp3;
+package mpeg.audio;
 
-class Mp3Frame {
+class Frame {
     public var hasCrc:Bool;
     public var hasPadding:Bool;
     public var privateBit:Bool;

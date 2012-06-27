@@ -1,8 +1,8 @@
-package mp3;
+package mpeg.audio;
 
 import haxe.unit.TestCase;
 
-class Mp3ReaderTest extends TestCase {
+class MpegAudioReaderTest extends TestCase {
     public function new () {
         super();
     }
@@ -10,7 +10,7 @@ class Mp3ReaderTest extends TestCase {
     public function testConstructorRejectsNull () {
         var caught = false;
         try {
-            new Mp3Reader(null);
+            new MpegAudioReader(null);
         } catch (e:String) {
             caught = true;
         }

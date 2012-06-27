@@ -1,4 +1,4 @@
-package mp3;
+package mpeg.audio;
 
 import haxe.unit.TestRunner;
 
@@ -13,7 +13,7 @@ class TestMain {
         #end
 
         var testRunner = new TestRunner();
-        testRunner.add(new Mp3ReaderTest());
+        testRunner.add(new MpegAudioReaderTest());
         testRunner.run();
     }
 }
