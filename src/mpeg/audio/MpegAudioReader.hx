@@ -73,73 +73,90 @@ class MpegAudioReader {
             case Start, Seeking:
             return seek();
 
-            case Frame(frame):
-            state = MpegAudioReaderState.Seeking;
-            return Element.Frame(frame);
-
-            case InvalidFrame():
-            state = MpegAudioReaderState.Seeking;
-            return unknown();
+            case Frame:
+            return frame();
 
             case End:
+            return end();
+
+            case Ended:
             throw new Eof();
         }
     }
 
     function seek () {
         try {
-            var b = 0;
-
             do {
                 do {
                     if (!bufferSpace(2)) {
                         return unknown();
                     }
                 } while (readByte() != 0xff);
-            } while ((b = readByte() & 0xf8) != 0xf8);
-
-            var unknownElement = unknown(-2);
-
-            var layerIndex = (b >> 1) & 0x3;
-            var hasCrc = b & 1 == 1;
-
-            b = readByte();
-
-            var bitrateIndex = (b >> 4) & 0xf;
-            var samplingFrequencyIndex = (b >> 2) & 0x2;
-            var hasPadding = (b >> 1) & 1 == 1;
-            var privateBit = b & 1 == 1;
-
-            b = readByte();
-            var modeIndex = (b >> 6) & 0x2;
-            var modeExtensionIndex = (b >> 4) & 0x2;
-            var copyright = (b >> 3) & 1 == 1;
-            var original = (b >> 2) & 1 == 1;
-            var emphasisIndex = b & 0x2;
-
-            var layer = layers[layerIndex];
-            var bitrate = bitrates[layerIndex][bitrateIndex];
-            var samplingFrequency = samplingFrequencies[samplingFrequencyIndex];
-
-            if (layer == null || bitrate == null || samplingFrequency == null) {
-                state = MpegAudioReaderState.InvalidFrame;
-                return unknownElement;
-            }
-
-            // TODO
-
-            var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency,
-                    hasPadding, privateBit, copyright, original);
-
-            if (unknownElement == null) {
-                state = MpegAudioReaderState.Seeking;
-                return Element.Frame(frame);
-            } else {
-                state = MpegAudioReaderState.Frame(frame);
-                return unknownElement;
-            }
+            } while ((readByte() & 0xf8) != 0xf8);
         } catch (eof:Eof) {
+            return end();
+        }
+
+        var unknownElement = unknown(-2);
+
+        if (unknownElement == null) {
+            return frame();
+        } else {
+            state = MpegAudioReaderState.Frame;
+            return unknownElement;
+        }
+    }
+
+    function frame () {
+        try {
+            readBytes(2);
+        } catch (eof:Eof) {
+            return end();
+        }
+
+        var b = buffer.get(1);
+        var layerIndex = (b >> 1) & 0x3;
+        var hasCrc = b & 1 == 1;
+
+        b = buffer.get(2);
+        var bitrateIndex = (b >> 4) & 0xf;
+        var samplingFrequencyIndex = (b >> 2) & 0x2;
+        var hasPadding = (b >> 1) & 1 == 1;
+        var privateBit = b & 1 == 1;
+
+        b = buffer.get(3);
+        var modeIndex = (b >> 6) & 0x2;
+        var modeExtensionIndex = (b >> 4) & 0x2;
+        var copyright = (b >> 3) & 1 == 1;
+        var original = (b >> 2) & 1 == 1;
+        var emphasisIndex = b & 0x2;
+
+        var layer = layers[layerIndex];
+        var bitrate = bitrates[layerIndex][bitrateIndex];
+        var samplingFrequency = samplingFrequencies[samplingFrequencyIndex];
+
+        if (layer == null || bitrate == null || samplingFrequency == null) {
+            return unknown();
+        }
+
+        // TODO
+
+        var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency,
+                hasPadding, privateBit, copyright, original);
+
+        state = MpegAudioReaderState.Seeking;
+        return Element.Frame(frame);
+    }
+
+    function end () {
+        var unknownElement = unknown();
+
+        if (unknownElement == null) {
+            state = MpegAudioReaderState.Ended;
             return Element.End;
+        } else {
+            state = MpegAudioReaderState.End;
+            return unknownElement;
         }
     }
 
@@ -174,15 +191,15 @@ class MpegAudioReader {
         return b;
     }
 
-    inline function byte () {
-        return buffer.get(bufferPos);
+    inline function readBytes (count:Int) {
+        input.readBytes(buffer, bufferPos, count);
     }
 }
 
 private enum MpegAudioReaderState {
     Start;
     Seeking;
-    Frame(frame:Frame);
-    InvalidFrame;
+    Frame;
     End;
+    Ended;
 }
