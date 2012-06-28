@@ -12,6 +12,16 @@ class MpegAudioReader {
     // This is the next-largest power-of-two.
     static inline var BUFFER_SIZE = 4096;
 
+    static var layers = [null, Layer.Layer3, Layer.Layer2, Layer.Layer1];
+
+    static var bitrates = [
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, null],
+            [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, null],
+            [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, null]];
+
+    static var samplingFrequencies = [44100, 48000, 32000, null];
+
     var input:Input;
     var state:MpegAudioReaderState;
 
@@ -67,6 +77,10 @@ class MpegAudioReader {
             state = MpegAudioReaderState.Seeking;
             return Element.Frame(frame);
 
+            case InvalidFrame():
+            state = MpegAudioReaderState.Seeking;
+            return unknown();
+
             case End:
             throw new Eof();
         }
@@ -103,14 +117,19 @@ class MpegAudioReader {
             var original = (b >> 2) & 1 == 1;
             var emphasisIndex = b & 0x2;
 
-            var frame = new Frame();
-            frame.hasCrc = hasCrc;
-            frame.hasPadding = hasPadding;
-            frame.privateBit = privateBit;
-            frame.copyright = copyright;
-            frame.original = original;
+            var layer = layers[layerIndex];
+            var bitrate = bitrates[layerIndex][bitrateIndex];
+            var samplingFrequency = samplingFrequencies[samplingFrequencyIndex];
+
+            if (layer == null || bitrate == null || samplingFrequency == null) {
+                state = MpegAudioReaderState.InvalidFrame;
+                return unknownElement;
+            }
 
             // TODO
+
+            var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency,
+                    hasPadding, privateBit, copyright, original);
 
             if (unknownElement == null) {
                 state = MpegAudioReaderState.Seeking;
@@ -164,5 +183,6 @@ private enum MpegAudioReaderState {
     Start;
     Seeking;
     Frame(frame:Frame);
+    InvalidFrame;
     End;
 }
