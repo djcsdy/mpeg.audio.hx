@@ -108,6 +108,8 @@ class MpegAudioReader {
     }
 
     function frame () {
+        assert(bufferPos == 2);
+
         try {
             readBytes(2);
         } catch (eof:Eof) {
@@ -161,9 +163,7 @@ class MpegAudioReader {
     }
 
     function unknown (offset=0) {
-        if (offset > 0 || -offset > bufferPos) {
-            throw "MpegAudioReader internal error";
-        }
+        assert (offset <= 0 && -offset < bufferPos);
 
         var length = bufferPos + offset;
 
@@ -179,6 +179,12 @@ class MpegAudioReader {
         bufferPos = -offset;
 
         return element;
+    }
+
+    inline function assert (condition:Bool) {
+        if (!condition) {
+            throw "MpegAudioReader internal error";
+        }
     }
 
     inline function bufferSpace (bytes = 0) {
