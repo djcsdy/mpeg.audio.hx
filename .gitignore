@@ -1,7 +1,10 @@
-bin
+/bin
 *.hxproj
 *.iml
-.idea
-out
-*.build
-*.n
+/.idea
+/out
+/mpeg.audio.test.swf
+/mpeg.audio.test.js
+/mpeg.audio.test.n
+/mpeg.audio.test.cpp
+/mpeg.audio.test.php

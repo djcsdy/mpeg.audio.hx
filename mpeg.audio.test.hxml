@@ -1,4 +1,29 @@
 -cp src
 -cp test
+-swf mpeg.audio.test.swf
+-main mpeg.audio.TestMain
+--next
+
+-cp src
+-cp test
+-js mpeg.audio.test.js
+-main mpeg.audio.TestMain
+--next
+
+-cp src
+-cp test
 -neko mpeg.audio.test.n
 -main mpeg.audio.TestMain
+--next
+
+-cp src
+-cp test
+-php mpeg.audio.test.php
+-main mpeg.audio.TestMain
+--next
+
+-cp src
+-cp test
+-cpp mpeg.audio.test.cpp
+-main mpeg.audio.TestMain
+--next
