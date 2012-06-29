@@ -22,6 +22,8 @@ class MpegAudioReader {
 
     static var samplingFrequencies = [44100, 48000, 32000, null];
 
+    static var emphases = [Emphasis.None, Emphasis.RedBook, null, Emphasis.J17];
+
     var input:Input;
     var state:MpegAudioReaderState;
 
@@ -127,8 +129,8 @@ class MpegAudioReader {
         var privateBit = b & 1 == 1;
 
         b = buffer.get(3);
-        var modeIndex = (b >> 6) & 0x2;
-        var modeExtensionIndex = (b >> 4) & 0x2;
+        var mode = (b >> 6) & 0x2;
+        var modeExtension = (b >> 4) & 0x2;
         var copyright = (b >> 3) & 1 == 1;
         var original = (b >> 2) & 1 == 1;
         var emphasisIndex = b & 0x2;
@@ -136,15 +138,17 @@ class MpegAudioReader {
         var layer = layers[layerIndex];
         var bitrate = bitrates[layerIndex][bitrateIndex];
         var samplingFrequency = samplingFrequencies[samplingFrequencyIndex];
+        var emphasis = emphases[emphasisIndex];
 
-        if (layer == null || bitrate == null || samplingFrequency == null) {
+        if (layer == null || bitrate == null || samplingFrequency == null
+                || emphasis == null) {
             return unknown();
         }
 
         // TODO
 
-        var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency,
-                hasPadding, privateBit, copyright, original);
+        var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
+                privateBit, mode, modeExtension, copyright, original, emphasis);
 
         state = MpegAudioReaderState.Seeking;
         return Element.Frame(frame);
