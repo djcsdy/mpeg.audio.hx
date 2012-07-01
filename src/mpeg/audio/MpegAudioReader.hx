@@ -99,21 +99,17 @@ class MpegAudioReader {
             return end();
         }
 
-        var unknownElement = unknown(-2);
-
-        if (unknownElement == null) {
-            return frame();
-        } else {
+        if (bufferPos > 2) {
             state = MpegAudioReaderState.Frame;
-            return unknownElement;
+            return unknown(bufferPos - 2);
+        } else {
+            return frame();
         }
     }
 
     function frame () {
-        assert(bufferPos == 2);
-
         try {
-            readBytes(2);
+            readBytesTo(4);
         } catch (eof:Eof) {
             return end();
         }
@@ -142,7 +138,10 @@ class MpegAudioReader {
 
         if (layer == null || bitrate == null || samplingFrequency == null
                 || emphasis == null) {
-            return unknown();
+            // This isn't a valid frame.
+            // Seek for another frame starting from the byte after the bogus syncword.
+            state = MpegAudioReaderState.Seeking;
+            return unknown(1);
         }
 
         // TODO
@@ -166,21 +165,21 @@ class MpegAudioReader {
         }
     }
 
-    function unknown (offset=0) {
-        assert (offset <= 0 && -offset < bufferPos);
-
-        var length = bufferPos + offset;
-
-        if (length == 0) {
+    function unknown (length=-1) {
+        if (length == -1) {
+            length = bufferPos;
+        } else if (length == 0) {
             return null;
         }
+
+        assert (length > 0 && length <= bufferPos);
 
         var bytes:Bytes = Bytes.alloc(length);
         bytes.blit(0, buffer, 0, length);
         var element = Element.Unknown(bytes);
 
-        buffer.blit(0, buffer, length, -offset);
-        bufferPos = -offset;
+        buffer.blit(0, buffer, length, bufferPos - length);
+        bufferPos = length;
 
         return element;
     }
@@ -203,6 +202,12 @@ class MpegAudioReader {
 
     inline function readBytes (count:Int) {
         input.readBytes(buffer, bufferPos, count);
+    }
+
+    inline function readBytesTo (position:Int) {
+        if (bufferPos < position) {
+            input.readBytes(buffer, bufferPos, position - bufferPos);
+        }
     }
 }
 
