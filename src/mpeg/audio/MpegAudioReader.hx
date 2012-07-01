@@ -12,17 +12,26 @@ class MpegAudioReader {
     // This is the next-largest power-of-two.
     static inline var BUFFER_SIZE = 4096;
 
+    static inline var FRAME_HEADER_SIZE = 4;
+
     static var layers = [null, Layer.Layer3, Layer.Layer2, Layer.Layer1];
 
     static var bitrates = [
             [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-            [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, null],
-            [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, null],
-            [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, null]];
+            [0, 32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000,
+                    320000, 352000, 384000, 416000, 448000, null],
+            [0, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 160000,
+                    192000, 224000, 256000, 320000, 384000, null],
+            [0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000,
+                    160000, 192000, 224000, 256000, 320000, null]];
 
     static var samplingFrequencies = [44100, 48000, 32000, null];
 
     static var emphases = [Emphasis.None, Emphasis.RedBook, null, Emphasis.J17];
+
+    static var slotSizeByLayerIndex = [0, 1, 1, 4];
+
+    static var slotsByLayerIndex = [0, 12, 12, 144];
 
     var input:Input;
     var state:MpegAudioReaderState;
@@ -109,7 +118,7 @@ class MpegAudioReader {
 
     function frame () {
         try {
-            readBytesTo(4);
+            readBytesTo(FRAME_HEADER_SIZE);
         } catch (eof:Eof) {
             return end();
         }
@@ -144,10 +153,25 @@ class MpegAudioReader {
             return unknown(1);
         }
 
-        // TODO
+        // TODO handle free-format bitrate.
+
+        var slots = Math.floor(slotsByLayerIndex[layerIndex] * bitrate / samplingFrequency)
+                + if (hasPadding) 1 else 0;
+
+        var bytes = slots * slotSizeByLayerIndex[layerIndex]
+                + if (hasCrc) 2 else 0;
+
+        try {
+            readBytes(bytes);
+        } catch (eof:Eof) {
+            return end();
+        }
+
+        var frameData = Bytes.alloc(bytes);
+        frameData.blit(0, buffer, FRAME_HEADER_SIZE, bytes);
 
         var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
-                privateBit, mode, modeExtension, copyright, original, emphasis);
+                privateBit, mode, modeExtension, copyright, original, emphasis, frameData);
 
         state = MpegAudioReaderState.Seeking;
         return Element.Frame(frame);
