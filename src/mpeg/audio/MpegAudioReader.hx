@@ -253,8 +253,9 @@ class MpegAudioReader {
     inline function readAheadBytesTo (position:Int) {
         assert (position >= 0 && position < BUFFER_SIZE);
 
-        if (bufferLength < position) {
-            input.readBytes(buffer, bufferLength, position - bufferLength);
+        while (bufferLength <= position) {
+            buffer.set(bufferLength, input.readByte());
+            ++bufferLength;
         }
     }
 }
