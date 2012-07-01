@@ -180,7 +180,7 @@ class MpegAudioReader {
     }
 
     function end () {
-        var unknownElement = yieldUnknown();
+        var unknownElement = yieldUnknown(bufferLength);
 
         if (unknownElement == null) {
             state = MpegAudioReaderState.Ended;
@@ -234,15 +234,15 @@ class MpegAudioReader {
     }
 
     inline function readByte (position:Int=-1) {
-        if (position != -1) {
-            bufferCursor = position;
+        if (position == -1) {
+            position = bufferCursor;
         }
 
-        assert(bufferCursor >= 0);
+        readAheadBytesTo(position);
 
-        readAheadBytesTo(bufferCursor);
+        bufferCursor = position + 1;
 
-        return buffer.get(bufferCursor++);
+        return buffer.get(position);
     }
 
     inline function readBytes (count:Int) {
@@ -251,7 +251,7 @@ class MpegAudioReader {
     }
 
     inline function readAheadBytesTo (position:Int) {
-        assert (position < BUFFER_SIZE);
+        assert (position >= 0 && position < BUFFER_SIZE);
 
         if (bufferLength < position) {
             input.readBytes(buffer, bufferLength, position - bufferLength);

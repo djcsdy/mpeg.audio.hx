@@ -1,5 +1,6 @@
 package mpeg.audio;
 
+import haxe.io.Eof;
 import haxe.unit.TestCase;
 
 class MpegAudioReaderTest extends TestCase {
@@ -14,6 +15,21 @@ class MpegAudioReaderTest extends TestCase {
         } catch (e:String) {
             caught = true;
         }
+        assertTrue(caught);
+    }
+
+    public function testEmptyInput () {
+        var input = new InputMock();
+        var reader = new MpegAudioReader(input);
+        assertEquals(Element.End, reader.readNext());
+
+        var caught = false;
+        try {
+            reader.readNext();
+        } catch (e:Eof) {
+            caught = true;
+        }
+
         assertTrue(caught);
     }
 }
