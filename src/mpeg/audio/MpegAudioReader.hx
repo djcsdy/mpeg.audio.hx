@@ -37,7 +37,8 @@ class MpegAudioReader {
     var state:MpegAudioReaderState;
 
     var buffer:Bytes;
-    var bufferPos:Int;
+    var bufferCursor:Int;
+    var bufferLength:Int;
 
     public function new (input:Input) {
         if (input == null) {
@@ -48,7 +49,8 @@ class MpegAudioReader {
         this.state = MpegAudioReaderState.Start;
 
         buffer = Bytes.alloc(BUFFER_SIZE);
-        bufferPos = 0;
+        bufferCursor = 0;
+        bufferLength = 0;
     }
 
     public function readAll () {
@@ -96,6 +98,8 @@ class MpegAudioReader {
     }
 
     function seek () {
+        bufferCursor = 0;
+
         try {
             do {
                 do {
@@ -108,9 +112,9 @@ class MpegAudioReader {
             return end();
         }
 
-        if (bufferPos > 2) {
+        if (bufferCursor > 2) {
             state = MpegAudioReaderState.Frame;
-            return unknown(bufferPos - 2);
+            return unknown(bufferCursor - 2);
         } else {
             return frame();
         }
@@ -118,7 +122,7 @@ class MpegAudioReader {
 
     function frame () {
         try {
-            readBytesTo(FRAME_HEADER_SIZE);
+            readAheadBytesTo(FRAME_HEADER_SIZE);
         } catch (eof:Eof) {
             return end();
         }
@@ -191,19 +195,19 @@ class MpegAudioReader {
 
     function unknown (length=-1) {
         if (length == -1) {
-            length = bufferPos;
+            length = bufferCursor;
         } else if (length == 0) {
             return null;
         }
 
-        assert (length > 0 && length <= bufferPos);
+        assert (length > 0 && length <= bufferLength);
 
         var bytes:Bytes = Bytes.alloc(length);
         bytes.blit(0, buffer, 0, length);
         var element = Element.Unknown(bytes);
 
-        buffer.blit(0, buffer, length, bufferPos - length);
-        bufferPos = length;
+        buffer.blit(0, buffer, length, bufferLength - length);
+        bufferLength = length;
 
         return element;
     }
@@ -215,22 +219,31 @@ class MpegAudioReader {
     }
 
     inline function bufferSpace (bytes = 0) {
-        return bufferPos + bytes < BUFFER_SIZE;
+        return bufferCursor + bytes < BUFFER_SIZE;
     }
 
-    inline function readByte () {
-        var b = input.readByte();
-        buffer.set(bufferPos++, b);
-        return b;
+    inline function readByte (position:Int=-1) {
+        if (position != -1) {
+            bufferCursor = position;
+        }
+
+        assert(bufferCursor >= 0);
+
+        readAheadBytesTo(bufferCursor);
+
+        return buffer.get(bufferCursor++);
     }
 
     inline function readBytes (count:Int) {
-        input.readBytes(buffer, bufferPos, count);
+        readAheadBytesTo(bufferCursor + count);
+        bufferCursor += count;
     }
 
-    inline function readBytesTo (position:Int) {
-        if (bufferPos < position) {
-            input.readBytes(buffer, bufferPos, position - bufferPos);
+    inline function readAheadBytesTo (position:Int) {
+        assert (position < BUFFER_SIZE);
+
+        if (bufferLength < position) {
+            input.readBytes(buffer, bufferLength, position - bufferLength);
         }
     }
 }
