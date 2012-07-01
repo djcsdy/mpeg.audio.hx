@@ -103,7 +103,7 @@ class MpegAudioReader {
             do {
                 do {
                     if (!bufferSpace(2)) {
-                        return unknown();
+                        return yieldUnknown();
                     }
                 } while (readByte() != 0xff);
             } while ((readByte() & 0xf8) != 0xf8);
@@ -113,7 +113,7 @@ class MpegAudioReader {
 
         if (bufferCursor > 2) {
             state = MpegAudioReaderState.Frame;
-            return unknown(bufferCursor - 2);
+            return yieldUnknown(bufferCursor - 2);
         } else {
             return frame();
         }
@@ -153,7 +153,7 @@ class MpegAudioReader {
             // This isn't a valid frame.
             // Seek for another frame starting from the byte after the bogus syncword.
             state = MpegAudioReaderState.Seeking;
-            return unknown(1);
+            return yieldUnknown(1);
         }
 
         // TODO handle free-format bitrate.
@@ -170,8 +170,7 @@ class MpegAudioReader {
             return end();
         }
 
-        var frameData = Bytes.alloc(bytes);
-        frameData.blit(0, buffer, FRAME_HEADER_SIZE, bytes);
+        var frameData = yieldBytes();
 
         var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
                 privateBit, mode, modeExtension, copyright, original, emphasis, frameData);
@@ -181,7 +180,7 @@ class MpegAudioReader {
     }
 
     function end () {
-        var unknownElement = unknown();
+        var unknownElement = yieldUnknown();
 
         if (unknownElement == null) {
             state = MpegAudioReaderState.Ended;
@@ -192,23 +191,36 @@ class MpegAudioReader {
         }
     }
 
-    function unknown (length=-1) {
+    function yieldUnknown (length=-1) {
         if (length == -1) {
             length = bufferCursor;
-        } else if (length == 0) {
+        }
+
+        if (length == 0) {
             return null;
         }
 
-        assert (length > 0 && length <= bufferLength);
+        return Element.Unknown(yieldBytes(length));
+    }
+
+    function yieldBytes (length=-1) {
+        if (length == -1) {
+            length = bufferCursor;
+        } else if (length == 0) {
+            return Bytes.alloc(0);
+        }
+
+        assert(length > 0 && length <= bufferLength);
 
         var bytes:Bytes = Bytes.alloc(length);
         bytes.blit(0, buffer, 0, length);
-        var element = Element.Unknown(bytes);
 
         buffer.blit(0, buffer, length, bufferLength - length);
-        bufferLength = length;
 
-        return element;
+        bufferLength -= length;
+        bufferCursor -= length;
+
+        return bytes;
     }
 
     inline function assert (condition:Bool) {
