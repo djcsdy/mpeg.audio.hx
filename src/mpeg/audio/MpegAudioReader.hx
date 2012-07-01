@@ -2,7 +2,6 @@ package mpeg.audio;
 
 import haxe.io.Bytes;
 import haxe.io.Eof;
-import haxe.Int32;
 import haxe.io.Input;
 
 class MpegAudioReader {
