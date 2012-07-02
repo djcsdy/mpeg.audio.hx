@@ -1,5 +1,6 @@
 package mpeg.audio;
 
+import haxe.io.Bytes;
 import haxe.io.Eof;
 import haxe.io.Input;
 
@@ -23,7 +24,23 @@ class InputMock extends Input {
         }
     }
 
-    public function enqueueBytes (bytes:Iterable<Int>) {
+    public function enqueueBytes (bytes:Bytes) {
+        enqueueIterable({
+            iterator: function () {
+                var pos = 0;
+                return {
+                    hasNext: function () {
+                        return pos < bytes.length;
+                    },
+                    next: function () {
+                        return bytes.get(pos++);
+                    }
+                };
+            }
+        });
+    }
+
+    public function enqueueIterable (bytes:Iterable<Int>) {
         if (bytesQueue == null) {
             bytesQueue = bytes.iterator();
         } else {

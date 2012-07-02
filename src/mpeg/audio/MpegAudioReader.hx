@@ -26,6 +26,8 @@ class MpegAudioReader {
 
     static var samplingFrequencies = [44100, 48000, 32000, null];
 
+    static var modes = [Mode.Stereo, Mode.JointStereo, Mode.DualChannel, Mode.SingleChannel];
+
     static var emphases = [Emphasis.None, Emphasis.RedBook, null, Emphasis.J17];
 
     static var slotSizeByLayerIndex = [0, 1, 1, 4];
@@ -120,32 +122,40 @@ class MpegAudioReader {
     }
 
     function frame () {
+        var b:Int;
         try {
-            readBytesTo(FRAME_HEADER_SIZE);
+            b = readByte(1);
         } catch (eof:Eof) {
             return end();
         }
-
-        var b = buffer.get(1);
         var layerIndex = (b >> 1) & 0x3;
         var hasCrc = b & 1 == 1;
 
-        b = buffer.get(2);
+        try {
+            b = readByte(2);
+        } catch (eof:Eof) {
+            return end();
+        }
         var bitrateIndex = (b >> 4) & 0xf;
-        var samplingFrequencyIndex = (b >> 2) & 0x2;
+        var samplingFrequencyIndex = (b >> 2) & 0x3;
         var hasPadding = (b >> 1) & 1 == 1;
         var privateBit = b & 1 == 1;
 
-        b = buffer.get(3);
-        var mode = (b >> 6) & 0x2;
-        var modeExtension = (b >> 4) & 0x2;
+        try {
+            b = readByte(3);
+        } catch (eof:Eof) {
+            return end();
+        }
+        var modeIndex = (b >> 6) & 0x3;
+        var modeExtension = (b >> 4) & 0x3;
         var copyright = (b >> 3) & 1 == 1;
         var original = (b >> 2) & 1 == 1;
-        var emphasisIndex = b & 0x2;
+        var emphasisIndex = b & 0x3;
 
         var layer = layers[layerIndex];
         var bitrate = bitrates[layerIndex][bitrateIndex];
         var samplingFrequency = samplingFrequencies[samplingFrequencyIndex];
+        var mode = modes[modeIndex];
         var emphasis = emphases[emphasisIndex];
 
         if (layer == null || bitrate == null || samplingFrequency == null
@@ -161,11 +171,10 @@ class MpegAudioReader {
         var slots = Math.floor(slotsByLayerIndex[layerIndex] * bitrate / samplingFrequency)
                 + if (hasPadding) 1 else 0;
 
-        var bytes = slots * slotSizeByLayerIndex[layerIndex]
-                + if (hasCrc) 2 else 0;
+        var frameLength = slots * slotSizeByLayerIndex[layerIndex];
 
         try {
-            readBytes(bytes);
+            readBytesTo(frameLength - 1);
         } catch (eof:Eof) {
             return end();
         }

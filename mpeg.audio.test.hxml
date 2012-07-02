@@ -3,6 +3,7 @@
 -swf-version 9
 -swf mpeg.audio.test.swf
 -main mpeg.audio.TestMain
+-resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 --no-inline
 -D fdb
 -debug
@@ -12,6 +13,7 @@
 -cp test
 -js mpeg.audio.test.js
 -main mpeg.audio.TestMain
+-resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 --no-inline
 -debug
 --next
@@ -20,6 +22,7 @@
 -cp test
 -neko mpeg.audio.test.n
 -main mpeg.audio.TestMain
+-resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 --no-inline
 -debug
 --next
@@ -28,6 +31,7 @@
 -cp test
 -php mpeg.audio.test.php
 -main mpeg.audio.TestMain
+-resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 --no-inline
 -debug
 --next
@@ -36,6 +40,7 @@
 -cp test
 -cpp mpeg.audio.test.cpp
 -main mpeg.audio.TestMain
+-resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 --no-inline
 -debug
 --next

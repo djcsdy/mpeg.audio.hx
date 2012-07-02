@@ -9,7 +9,7 @@ class Frame {
     public var samplingFrequency(default, null):Int;
     public var hasPadding(default, null):Bool;
     public var privateBit(default, null):Bool;
-    public var mode(default, null):Int;
+    public var mode(default, null):Mode;
     public var modeExtension(default, null):Int;
     public var copyright(default, null):Bool;
     public var original(default, null):Bool;
@@ -17,7 +17,7 @@ class Frame {
     public var frameData(default, null):Bytes;
 
     public function new(layer:Layer, hasCrc:Bool, bitrate:Int, samplingFrequency:Int, hasPadding:Bool,
-                        privateBit:Bool, mode:Int, modeExtension:Int, copyright:Bool, original:Bool,
+                        privateBit:Bool, mode:Mode, modeExtension:Int, copyright:Bool, original:Bool,
                         emphasis:Emphasis, frameData:Bytes) {
         this.layer = layer;
         this.hasCrc = hasCrc;
