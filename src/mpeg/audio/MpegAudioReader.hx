@@ -121,7 +121,7 @@ class MpegAudioReader {
 
     function frame () {
         try {
-            readAheadBytesTo(FRAME_HEADER_SIZE);
+            readBytesTo(FRAME_HEADER_SIZE);
         } catch (eof:Eof) {
             return end();
         }
@@ -238,25 +238,24 @@ class MpegAudioReader {
             position = bufferCursor;
         }
 
-        readAheadBytesTo(position);
-
-        bufferCursor = position + 1;
+        readBytesTo(position);
 
         return buffer.get(position);
     }
 
     inline function readBytes (count:Int) {
-        readAheadBytesTo(bufferCursor + count);
-        bufferCursor += count;
+        readBytesTo(bufferCursor + count);
     }
 
-    inline function readAheadBytesTo (position:Int) {
+    inline function readBytesTo (position:Int) {
         assert (position >= 0 && position < BUFFER_SIZE);
 
         while (bufferLength <= position) {
             buffer.set(bufferLength, input.readByte());
-            ++bufferLength;
+            bufferCursor = ++bufferLength;
         }
+
+        bufferCursor = position + 1;
     }
 }
 
