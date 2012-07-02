@@ -126,8 +126,7 @@ class MpegAudioReaderTest extends TestCase {
         for (emphasis in [{i: 0x1, expected: Emphasis.RedBook}, {i: 0x3, expected: Emphasis.J17}]) {
             bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
-            var mb = ((bytes.get(3) & 0xf0) | 0x08) | emphasis.i;
-            bytes.set(3, mb);
+            bytes.set(3, bytes.get(3) & 0xf0 | 0x08 | emphasis.i);
 
             var input = new InputMock();
             input.enqueueBytes(bytes);
@@ -155,6 +154,62 @@ class MpegAudioReaderTest extends TestCase {
             }
 
             assertEquals(Element.End, reader.readNext());
+        }
+    }
+
+    public function testSingleFrameWithInvalidHeader () {
+        var inputBytes:Bytes = Bytes.alloc(0x343);
+
+        for (invalidate in [
+            function (bytes:Bytes) {
+                // Invalid Layer
+                bytes.set(1, bytes.get(1) & 0xf9);
+            },
+            function (bytes:Bytes) {
+                // Invalid bit-rate
+                bytes.set(2, bytes.get(2) | 0xf0);
+            },
+            function (bytes:Bytes) {
+                // Invalid sampling frequency
+                bytes.set(2, bytes.get(2) | 0x0c);
+            },
+            function (bytes:Bytes) {
+                // Invalid emphasis
+                bytes.set(3, bytes.get(3) & 0xfc | 0x02);
+            }
+        ]) {
+            inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
+
+            invalidate(inputBytes);
+
+            var input = new InputMock();
+            input.enqueueBytes(inputBytes);
+
+            var reader = new MpegAudioReader(input);
+
+            var result:Array<Int> = [];
+
+            while (true) {
+                var element = reader.readNext();
+                switch (element) {
+                    case Unknown(inputBytes):
+                    for (i in 0...inputBytes.length) {
+                        result.push(inputBytes.get(i));
+                    }
+
+                    case End:
+                    break;
+
+                    default:
+                    throw "Expected 'Unknown' or 'End', but saw '" + element + "'";
+                }
+            }
+
+            assertEquals(inputBytes.length, result.length);
+
+            for (i in 0...result.length) {
+                assertEquals(inputBytes.get(i), result[i]);
+            }
         }
     }
 
