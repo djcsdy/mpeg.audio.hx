@@ -122,70 +122,40 @@ class MpegAudioReaderTest extends TestCase {
 
     public function testSingleFrameModifiedMetadata () {
         var bytes:Bytes = Bytes.alloc(0x343);
-        bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
-        bytes.set(3, bytes.get(3) & 0xf0 | 0x09);
+        for (emphasis in [{i: 0x1, expected: Emphasis.RedBook}, {i: 0x3, expected: Emphasis.J17}]) {
+            bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
-        var input = new InputMock();
-        input.enqueueBytes(bytes);
+            var mb = ((bytes.get(3) & 0xf0) | 0x08) | emphasis.i;
+            bytes.set(3, mb);
 
-        var reader = new MpegAudioReader(input);
+            var input = new InputMock();
+            input.enqueueBytes(bytes);
 
-        var element = reader.readNext();
-        switch (element) {
-            case Frame(frame):
-            assertEquals(Layer.Layer3, frame.layer);
-            assertTrue(frame.hasCrc);
-            assertEquals(256000, frame.bitrate);
-            assertEquals(44100, frame.samplingFrequency);
-            assertEquals(false, frame.hasPadding);
-            assertEquals(false, frame.privateBit);
-            assertEquals(Mode.JointStereo, frame.mode);
-            assertEquals(0, frame.modeExtension);
-            assertEquals(true, frame.copyright);
-            assertEquals(false, frame.original);
-            assertEquals(Emphasis.RedBook, frame.emphasis);
-            assertEquals(0x343, frame.frameData.length);
+            var reader = new MpegAudioReader(input);
 
-            default:
-            throw "Expected 'Frame', but saw '" + element + "'";
+            var element = reader.readNext();
+            switch (element) {
+                case Frame(frame):
+                assertEquals(Layer.Layer3, frame.layer);
+                assertTrue(frame.hasCrc);
+                assertEquals(256000, frame.bitrate);
+                assertEquals(44100, frame.samplingFrequency);
+                assertEquals(false, frame.hasPadding);
+                assertEquals(false, frame.privateBit);
+                assertEquals(Mode.JointStereo, frame.mode);
+                assertEquals(0, frame.modeExtension);
+                assertEquals(true, frame.copyright);
+                assertEquals(false, frame.original);
+                assertEquals(emphasis.expected, frame.emphasis);
+                assertEquals(0x343, frame.frameData.length);
+
+                default:
+                throw "Expected 'Frame', but saw '" + element + "'";
+            }
+
+            assertEquals(Element.End, reader.readNext());
         }
-
-        assertEquals(Element.End, reader.readNext());
-    }
-
-    public function testSingleFrameModifiedMetadata2 () {
-        var bytes:Bytes = Bytes.alloc(0x343);
-        bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
-
-        bytes.set(3, bytes.get(3) & 0xf0 | 0x0b);
-
-        var input = new InputMock();
-        input.enqueueBytes(bytes);
-
-        var reader = new MpegAudioReader(input);
-
-        var element = reader.readNext();
-        switch (element) {
-            case Frame(frame):
-            assertEquals(Layer.Layer3, frame.layer);
-            assertTrue(frame.hasCrc);
-            assertEquals(256000, frame.bitrate);
-            assertEquals(44100, frame.samplingFrequency);
-            assertEquals(false, frame.hasPadding);
-            assertEquals(false, frame.privateBit);
-            assertEquals(Mode.JointStereo, frame.mode);
-            assertEquals(0, frame.modeExtension);
-            assertEquals(true, frame.copyright);
-            assertEquals(false, frame.original);
-            assertEquals(Emphasis.J17, frame.emphasis);
-            assertEquals(0x343, frame.frameData.length);
-
-            default:
-            throw "Expected 'Frame', but saw '" + element + "'";
-        }
-
-        assertEquals(Element.End, reader.readNext());
     }
 
     function assertSequenceEquals<T> (expected:Iterable<T>, actual:Iterable<T>) {
