@@ -60,6 +60,33 @@ class MpegAudioReaderTest extends TestCase {
         assertSequenceEquals(garbage, result);
     }
 
+    public function testTruncatedFrame () {
+        var bytes = [0xff, 0xfa, 0x90, 0x40, 0x01, 0x02, 0x03];
+
+        var input = new InputMock();
+        input.enqueueBytes(bytes);
+
+        var reader = new MpegAudioReader(input);
+
+        var result:Array<Int> = [];
+        while (true) {
+            switch (reader.readNext()) {
+                case Unknown(bytes):
+                for (i in 0...bytes.length) {
+                    result.push(bytes.get(i));
+                }
+
+                case End:
+                break;
+
+                default:
+                throw "Expected 'Unknown' or 'End'";
+            }
+        }
+
+        assertSequenceEquals(bytes, result);
+    }
+
     function assertSequenceEquals<T> (expected:Iterable<T>, actual:Iterable<T>) {
         var expectedIterator = expected.iterator();
         var actualIterator = actual.iterator();

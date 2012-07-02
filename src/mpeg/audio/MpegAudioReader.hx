@@ -17,12 +17,12 @@ class MpegAudioReader {
 
     static var bitrates = [
             [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-            [0, 32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000,
-                    320000, 352000, 384000, 416000, 448000, null],
+            [0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000,
+            160000, 192000, 224000, 256000, 320000, null],
             [0, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 160000,
                     192000, 224000, 256000, 320000, 384000, null],
-            [0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000,
-                    160000, 192000, 224000, 256000, 320000, null]];
+            [0, 32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000,
+                    320000, 352000, 384000, 416000, 448000, null]];
 
     static var samplingFrequencies = [44100, 48000, 32000, null];
 
@@ -30,7 +30,7 @@ class MpegAudioReader {
 
     static var slotSizeByLayerIndex = [0, 1, 1, 4];
 
-    static var slotsByLayerIndex = [0, 12, 12, 144];
+    static var slotsByLayerIndex = [0, 144, 12, 12];
 
     var input:Input;
     var state:MpegAudioReaderState;
