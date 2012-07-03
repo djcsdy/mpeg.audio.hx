@@ -210,9 +210,9 @@ class MpegAudioReaderTest extends TestCase {
             while (true) {
                 var element = reader.readNext();
                 switch (element) {
-                    case Unknown(inputBytes):
-                    for (i in 0...inputBytes.length) {
-                        result.push(inputBytes.get(i));
+                    case Unknown(bytes):
+                    for (i in 0...bytes.length) {
+                        result.push(bytes.get(i));
                     }
 
                     case End:
@@ -228,6 +228,70 @@ class MpegAudioReaderTest extends TestCase {
             for (i in 0...result.length) {
                 assertEquals(inputBytes.get(i), result[i]);
             }
+        }
+    }
+
+    public function testSingleFrameWithGarbagePrefixed () {
+        var inputBytes:Bytes = Bytes.alloc(0x343);
+        inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
+
+        for (prefix in [
+            [0xff],
+            [0xff, 0xfb],
+            [0x00],
+            [0x12, 0x23, 0x34]
+        ]) {
+            var input = new InputMock();
+            input.enqueueIterable(prefix);
+            input.enqueueBytes(inputBytes);
+
+            var reader = new MpegAudioReader(input);
+
+            var resultPrefix:Array<Int> = [];
+
+            var element = reader.readNext();
+            switch (element) {
+                case Unknown(bytes):
+                for (i in 0...bytes.length) {
+                    resultPrefix.push(bytes.get(i));
+                }
+
+                default:
+                throw "Expected 'Unknown', but saw '" + element + "'";
+            }
+
+            var resultFrame:Frame = null;
+
+            while (resultFrame == null) {
+                element = reader.readNext();
+                switch(element) {
+                    case Unknown(bytes):
+                    for (i in 0...bytes.length) {
+                        resultPrefix.push(bytes.get(i));
+                    }
+
+                    case Frame(frame):
+                    resultFrame = frame;
+
+                    default:
+                    throw "Expected 'Unknown' or 'Frame', but saw '" + element + "'";
+                }
+            }
+
+            assertSequenceEquals(prefix, resultPrefix);
+
+            assertEquals(Layer.Layer3, resultFrame.layer);
+            assertTrue(resultFrame.hasCrc);
+            assertEquals(256000, resultFrame.bitrate);
+            assertEquals(44100, resultFrame.samplingFrequency);
+            assertEquals(false, resultFrame.hasPadding);
+            assertEquals(false, resultFrame.privateBit);
+            assertEquals(Mode.JointStereo, resultFrame.mode);
+            assertEquals(0, resultFrame.modeExtension);
+            assertEquals(false, resultFrame.copyright);
+            assertEquals(true, resultFrame.original);
+            assertEquals(Emphasis.None, resultFrame.emphasis);
+            assertEquals(0x343, resultFrame.frameData.length);
         }
     }
 
