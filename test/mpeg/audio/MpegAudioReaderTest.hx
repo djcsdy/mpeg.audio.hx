@@ -1,5 +1,6 @@
 package mpeg.audio;
 
+import haxe.io.BytesInput;
 import haxe.io.Bytes;
 import haxe.io.Eof;
 import haxe.unit.TestCase;
@@ -103,11 +104,10 @@ class MpegAudioReaderTest extends TestCase {
                 modeExtension: 2
             }
         ]) {
-            var bytes:Bytes = Bytes.alloc(test.length);
+            var bytes = Bytes.alloc(test.length);
             bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), test.start, test.length);
 
-            var input = new InputMock();
-            input.enqueueBytes(bytes);
+            var input = new BytesInput(bytes);
 
             var reader = new MpegAudioReader(input);
 
@@ -127,9 +127,6 @@ class MpegAudioReaderTest extends TestCase {
                 assertEquals(Emphasis.None, frame.emphasis);
                 assertEquals(test.length, frame.frameData.length);
 
-                case Unknown(bytes) :
-                trace("Unknown " + bytes.length + " bytes");
-
                 default:
                 throw "Expected 'Frame', but saw '" + element + "'";
             }
@@ -139,15 +136,14 @@ class MpegAudioReaderTest extends TestCase {
     }
 
     public function testSingleFrameModifiedMetadata () {
-        var bytes:Bytes = Bytes.alloc(0x343);
+        var bytes = Bytes.alloc(0x343);
 
         for (emphasis in [{i: 0x1, expected: Emphasis.RedBook}, {i: 0x3, expected: Emphasis.J17}]) {
             bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
             bytes.set(3, bytes.get(3) & 0xf0 | 0x08 | emphasis.i);
 
-            var input = new InputMock();
-            input.enqueueBytes(bytes);
+            var input = new BytesInput(bytes);
 
             var reader = new MpegAudioReader(input);
 
@@ -176,7 +172,7 @@ class MpegAudioReaderTest extends TestCase {
     }
 
     public function testSingleFrameWithInvalidHeader () {
-        var inputBytes:Bytes = Bytes.alloc(0x343);
+        var inputBytes = Bytes.alloc(0x343);
 
         for (invalidate in [
             function (bytes:Bytes) {
@@ -200,8 +196,7 @@ class MpegAudioReaderTest extends TestCase {
 
             invalidate(inputBytes);
 
-            var input = new InputMock();
-            input.enqueueBytes(inputBytes);
+            var input = new BytesInput(inputBytes);
 
             var reader = new MpegAudioReader(input);
 
@@ -232,7 +227,7 @@ class MpegAudioReaderTest extends TestCase {
     }
 
     public function testSingleFrameWithGarbagePrepended () {
-        var inputBytes:Bytes = Bytes.alloc(0x343);
+        var inputBytes = Bytes.alloc(0x343);
         inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
         for (garbage in [
@@ -298,7 +293,7 @@ class MpegAudioReaderTest extends TestCase {
     }
 
     public function testSingleFrameWithGarbageAppended () {
-        var inputBytes:Bytes = Bytes.alloc(0x343);
+        var inputBytes = Bytes.alloc(0x343);
         inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
         for (garbage in [
@@ -357,6 +352,50 @@ class MpegAudioReaderTest extends TestCase {
 
             assertSequenceEquals(garbage, resultGarbage);
         }
+    }
+
+    public function testTwoSuccessiveFrames () {
+        var bytes = Bytes.alloc(0x687);
+        bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x687);
+
+        var input = new BytesInput(bytes);
+
+        var reader = new MpegAudioReader(input);
+
+        for (expectedFrame in [
+            {
+                length: 0x343,
+                hasPadding: false,
+                modeExtension: 0
+            },
+            {
+                length: 0x344,
+                hasPadding: true,
+                modeExtension: 2
+            }
+        ]) {
+            var element = reader.readNext();
+            switch (element) {
+                case Frame(frame):
+                assertEquals(Layer.Layer3, frame.layer);
+                assertTrue(frame.hasCrc);
+                assertEquals(256000, frame.bitrate);
+                assertEquals(44100, frame.samplingFrequency);
+                assertEquals(expectedFrame.hasPadding, frame.hasPadding);
+                assertEquals(false, frame.privateBit);
+                assertEquals(Mode.JointStereo, frame.mode);
+                assertEquals(expectedFrame.modeExtension, frame.modeExtension);
+                assertEquals(false, frame.copyright);
+                assertEquals(true, frame.original);
+                assertEquals(Emphasis.None, frame.emphasis);
+                assertEquals(expectedFrame.length, frame.frameData.length);
+
+                default:
+                throw "Expected 'Frame', but saw '" + element + "'";
+            }
+        }
+
+        assertEquals(Element.End, reader.readNext());
     }
 
     function assertSequenceEquals<T> (expected:Iterable<T>, actual:Iterable<T>) {
