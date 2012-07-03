@@ -231,29 +231,29 @@ class MpegAudioReaderTest extends TestCase {
         }
     }
 
-    public function testSingleFrameWithGarbagePrefixed () {
+    public function testSingleFrameWithGarbagePrepended () {
         var inputBytes:Bytes = Bytes.alloc(0x343);
         inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
-        for (prefix in [
+        for (garbage in [
             [0xff],
             [0xff, 0xfb],
             [0x00],
             [0x12, 0x23, 0x34]
         ]) {
             var input = new InputMock();
-            input.enqueueIterable(prefix);
+            input.enqueueIterable(garbage);
             input.enqueueBytes(inputBytes);
 
             var reader = new MpegAudioReader(input);
 
-            var resultPrefix:Array<Int> = [];
+            var resultGarbage:Array<Int> = [];
 
             var element = reader.readNext();
             switch (element) {
                 case Unknown(bytes):
                 for (i in 0...bytes.length) {
-                    resultPrefix.push(bytes.get(i));
+                    resultGarbage.push(bytes.get(i));
                 }
 
                 default:
@@ -267,7 +267,7 @@ class MpegAudioReaderTest extends TestCase {
                 switch(element) {
                     case Unknown(bytes):
                     for (i in 0...bytes.length) {
-                        resultPrefix.push(bytes.get(i));
+                        resultGarbage.push(bytes.get(i));
                     }
 
                     case Frame(frame):
@@ -278,7 +278,9 @@ class MpegAudioReaderTest extends TestCase {
                 }
             }
 
-            assertSequenceEquals(prefix, resultPrefix);
+            assertEquals(Element.End, reader.readNext());
+
+            assertSequenceEquals(garbage, resultGarbage);
 
             assertEquals(Layer.Layer3, resultFrame.layer);
             assertTrue(resultFrame.hasCrc);
@@ -292,6 +294,68 @@ class MpegAudioReaderTest extends TestCase {
             assertEquals(true, resultFrame.original);
             assertEquals(Emphasis.None, resultFrame.emphasis);
             assertEquals(0x343, resultFrame.frameData.length);
+        }
+    }
+
+    public function testSingleFrameWithGarbageAppended () {
+        var inputBytes:Bytes = Bytes.alloc(0x343);
+        inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
+
+        for (garbage in [
+            [0xff],
+            [0xff, 0xfb],
+            [0x00],
+            [0x12, 0x23, 0x34]
+        ]) {
+            var input = new InputMock();
+            input.enqueueBytes(inputBytes);
+            input.enqueueIterable(garbage);
+
+            var reader = new MpegAudioReader(input);
+
+            var resultFrame:Frame = null;
+
+            var element = reader.readNext();
+            switch (element) {
+                case Frame(frame):
+                resultFrame = frame;
+
+                default:
+                throw "Expected 'Frame', but saw '" + element + "'";
+            }
+
+            var resultGarbage:Array<Int> = [];
+
+            while (true) {
+                element = reader.readNext();
+                switch(element) {
+                    case Unknown(bytes):
+                    for (i in 0...bytes.length) {
+                        resultGarbage.push(bytes.get(i));
+                    }
+
+                    case End:
+                    break;
+
+                    default:
+                    throw "Expected 'Unknown' or 'End', but saw '" + element + "'";
+                }
+            }
+
+            assertEquals(Layer.Layer3, resultFrame.layer);
+            assertTrue(resultFrame.hasCrc);
+            assertEquals(256000, resultFrame.bitrate);
+            assertEquals(44100, resultFrame.samplingFrequency);
+            assertEquals(false, resultFrame.hasPadding);
+            assertEquals(false, resultFrame.privateBit);
+            assertEquals(Mode.JointStereo, resultFrame.mode);
+            assertEquals(0, resultFrame.modeExtension);
+            assertEquals(false, resultFrame.copyright);
+            assertEquals(true, resultFrame.original);
+            assertEquals(Emphasis.None, resultFrame.emphasis);
+            assertEquals(0x343, resultFrame.frameData.length);
+
+            assertSequenceEquals(garbage, resultGarbage);
         }
     }
 
