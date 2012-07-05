@@ -160,8 +160,8 @@ class MpegAudioReader {
 
         if (layer == null || bitrate == null || samplingFrequency == null
                 || emphasis == null) {
-        // This isn't a valid frame.
-        // Seek for another frame starting from the byte after the bogus syncword.
+            // This isn't a valid frame.
+            // Seek for another frame starting from the byte after the bogus syncword.
             state = MpegAudioReaderState.Seeking;
             return yieldUnknown(1);
         }
