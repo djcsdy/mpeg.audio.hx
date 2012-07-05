@@ -32,7 +32,7 @@ class MpegAudioReader {
 
     static var slotSizeByLayerIndex = [0, 1, 1, 4];
 
-    static var slotsByLayerIndex = [0, 144, 12, 12];
+    static var slotsPerBitPerSampleByLayerIndex = [0, 144, 12, 12];
 
     var input:Input;
     var state:MpegAudioReaderState;
@@ -166,20 +166,47 @@ class MpegAudioReader {
             return yieldUnknown(1);
         }
 
-        // TODO handle free-format bitrate.
+        var frameData:Bytes;
 
-        var slots = Math.floor(slotsByLayerIndex[layerIndex] * bitrate / samplingFrequency)
-                + if (hasPadding) 1 else 0;
+        if (bitrate == 0) {
+            // free-format bitrate
 
-        var frameLength = slots * slotSizeByLayerIndex[layerIndex];
+            var end = false;
+            try {
+                do {
+                    do {
+                        if (!bufferSpace(2)) {
+                            return yieldUnknown();
+                        }
+                    } while (readByte() != 0xff);
+                } while ((readByte() & 0xf8) != 0xf8);
+            } catch (eof:Eof) {
+                end = true;
+            }
 
-        try {
-            readBytesTo(frameLength - 1);
-        } catch (eof:Eof) {
-            return end();
+            var frameLengthBytes = if (end) bufferCursor else bufferCursor - 2;
+            frameLengthBytes -= (frameLengthBytes % slotSizeByLayerIndex[layerIndex]);
+
+            var frameLengthSlots = Math.floor(frameLengthBytes / slotSizeByLayerIndex[layerIndex]);
+
+            bitrate = Math.floor(samplingFrequency * frameLengthSlots
+                    / slotsPerBitPerSampleByLayerIndex[layerIndex]); // TODO should bitrate be Float?
+
+            frameData = yieldBytes(frameLengthBytes);
+        } else {
+            var frameLengthSlots = Math.floor(slotsPerBitPerSampleByLayerIndex[layerIndex] * bitrate / samplingFrequency)
+                    + if (hasPadding) 1 else 0;
+
+            var frameLengthBytes = frameLengthSlots * slotSizeByLayerIndex[layerIndex];
+
+            try {
+                readBytesTo(frameLengthBytes - 1);
+            } catch (eof:Eof) {
+                return end();
+            }
+
+            frameData = yieldBytes();
         }
-
-        var frameData = yieldBytes();
 
         var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
                 privateBit, mode, modeExtension, copyright, original, emphasis, frameData);
@@ -238,8 +265,8 @@ class MpegAudioReader {
         }
     }
 
-    inline function bufferSpace (bytes = 0) {
-        return bufferCursor + bytes < BUFFER_SIZE;
+    inline function bufferSpace (bytes = 1) {
+        return bufferCursor + bytes <= BUFFER_SIZE;
     }
 
     inline function readByte (position:Int=-1) {
