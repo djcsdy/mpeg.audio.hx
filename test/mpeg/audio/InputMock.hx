@@ -7,7 +7,7 @@ import haxe.io.Input;
 class InputMock extends Input {
     var bytesQueue:Iterator<Int>;
 
-    public var onReadByte:Void->Int;
+    public var onReadByte:Void -> Int;
 
     public function new() {
         bytesQueue = null;
@@ -24,15 +24,15 @@ class InputMock extends Input {
         }
     }
 
-    public function enqueueBytes (bytes:Bytes) {
+    public function enqueueBytes(bytes:Bytes) {
         enqueueIterable({
-            iterator: function () {
+            iterator: function() {
                 var pos = 0;
                 return {
-                    hasNext: function () {
+                    hasNext: function() {
                         return pos < bytes.length;
                     },
-                    next: function () {
+                    next: function() {
                         return bytes.get(pos++);
                     }
                 };
@@ -40,7 +40,7 @@ class InputMock extends Input {
         });
     }
 
-    public function enqueueIterable (bytes:Iterable<Int>) {
+    public function enqueueIterable(bytes:Iterable<Int>) {
         if (bytesQueue == null) {
             bytesQueue = bytes.iterator();
         } else {
@@ -48,10 +48,10 @@ class InputMock extends Input {
             var nextQueue = bytes.iterator();
 
             bytesQueue = {
-                hasNext: function () {
+                hasNext: function() {
                     return previousQueue.hasNext() || nextQueue.hasNext();
                 },
-                next: function () {
+                next: function() {
                     if (previousQueue.hasNext()) {
                         return previousQueue.next();
                     } else {

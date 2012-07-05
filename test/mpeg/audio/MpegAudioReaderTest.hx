@@ -6,11 +6,11 @@ import haxe.io.Eof;
 import haxe.unit.TestCase;
 
 class MpegAudioReaderTest extends TestCase {
-    public function new () {
+    public function new() {
         super();
     }
 
-    public function testConstructorRejectsNull () {
+    public function testConstructorRejectsNull() {
         var caught = false;
         try {
             new MpegAudioReader(null);
@@ -20,7 +20,7 @@ class MpegAudioReaderTest extends TestCase {
         assertTrue(caught);
     }
 
-    public function testEmptyInput () {
+    public function testEmptyInput() {
         var input = new InputMock();
         var reader = new MpegAudioReader(input);
         assertEquals(Element.End, reader.readNext());
@@ -35,7 +35,7 @@ class MpegAudioReaderTest extends TestCase {
         assertTrue(caught);
     }
 
-    public function testGarbage () {
+    public function testGarbage() {
         var garbage = [0, 1, 2, 3, 4];
 
         var input = new InputMock();
@@ -62,7 +62,7 @@ class MpegAudioReaderTest extends TestCase {
         assertSequenceEquals(garbage, result);
     }
 
-    public function testTruncatedFrame () {
+    public function testTruncatedFrame() {
         var bytes = [0xff, 0xfa, 0x90, 0x40, 0x01, 0x02, 0x03];
 
         var input = new InputMock();
@@ -89,7 +89,7 @@ class MpegAudioReaderTest extends TestCase {
         assertSequenceEquals(bytes, result);
     }
 
-    public function testSingleFrame () {
+    public function testSingleFrame() {
         for (test in [
             {
                 start: 0x343,
@@ -135,7 +135,7 @@ class MpegAudioReaderTest extends TestCase {
         }
     }
 
-    public function testSingleFrameModifiedMetadata () {
+    public function testSingleFrameModifiedMetadata() {
         var bytes = Bytes.alloc(0x343);
 
         for (emphasis in [{i: 0x1, expected: Emphasis.RedBook}, {i: 0x3, expected: Emphasis.J17}]) {
@@ -171,26 +171,26 @@ class MpegAudioReaderTest extends TestCase {
         }
     }
 
-    public function testSingleFrameWithInvalidHeader () {
+    public function testSingleFrameWithInvalidHeader() {
         var inputBytes = Bytes.alloc(0x343);
 
         for (invalidate in [
-            function (bytes:Bytes) {
-                // Invalid Layer
-                bytes.set(1, bytes.get(1) & 0xf9);
-            },
-            function (bytes:Bytes) {
-                // Invalid bit-rate
-                bytes.set(2, bytes.get(2) | 0xf0);
-            },
-            function (bytes:Bytes) {
-                // Invalid sampling frequency
-                bytes.set(2, bytes.get(2) | 0x0c);
-            },
-            function (bytes:Bytes) {
-                // Invalid emphasis
-                bytes.set(3, bytes.get(3) & 0xfc | 0x02);
-            }
+        function(bytes:Bytes) {
+            // Invalid Layer
+            bytes.set(1, bytes.get(1) & 0xf9);
+        },
+        function(bytes:Bytes) {
+            // Invalid bit-rate
+            bytes.set(2, bytes.get(2) | 0xf0);
+        },
+        function(bytes:Bytes) {
+            // Invalid sampling frequency
+            bytes.set(2, bytes.get(2) | 0x0c);
+        },
+        function(bytes:Bytes) {
+            // Invalid emphasis
+            bytes.set(3, bytes.get(3) & 0xfc | 0x02);
+        }
         ]) {
             inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
@@ -226,7 +226,7 @@ class MpegAudioReaderTest extends TestCase {
         }
     }
 
-    public function testSingleFrameWithGarbagePrepended () {
+    public function testSingleFrameWithGarbagePrepended() {
         var inputBytes = Bytes.alloc(0x343);
         inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
@@ -259,7 +259,7 @@ class MpegAudioReaderTest extends TestCase {
 
             while (resultFrame == null) {
                 element = reader.readNext();
-                switch(element) {
+                switch (element) {
                     case Unknown(bytes):
                     for (i in 0...bytes.length) {
                         resultGarbage.push(bytes.get(i));
@@ -292,7 +292,7 @@ class MpegAudioReaderTest extends TestCase {
         }
     }
 
-    public function testSingleFrameWithGarbageAppended () {
+    public function testSingleFrameWithGarbageAppended() {
         var inputBytes = Bytes.alloc(0x343);
         inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
 
@@ -323,7 +323,7 @@ class MpegAudioReaderTest extends TestCase {
 
             while (true) {
                 element = reader.readNext();
-                switch(element) {
+                switch (element) {
                     case Unknown(bytes):
                     for (i in 0...bytes.length) {
                         resultGarbage.push(bytes.get(i));
@@ -354,7 +354,7 @@ class MpegAudioReaderTest extends TestCase {
         }
     }
 
-    public function testTwoSuccessiveFrames () {
+    public function testTwoSuccessiveFrames() {
         var bytes = Bytes.alloc(0x687);
         bytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x687);
 
@@ -397,23 +397,23 @@ class MpegAudioReaderTest extends TestCase {
 
         assertEquals(Element.End, reader.readNext());
     }
-    
-    public function testWholeFileExcludingInfoTag () {
+
+    public function testWholeFileExcludingInfoTag() {
         var resourceBytes = haxe.Resource.getBytes("acsloop-lame.mp3");
         var inputBytes = Bytes.alloc(resourceBytes.length - 0x343);
         inputBytes.blit(0, resourceBytes, 0x343, inputBytes.length);
-        
+
         var input = new BytesInput(inputBytes);
-        
+
         var reader = new MpegAudioReader(input);
-        
+
         var frameCount = 0;
         var totalSizeBytes = 0;
-        
+
         while (true) {
             var element = reader.readNext();
             switch (element) {
-                case Frame (frame):
+                case Frame(frame):
                 assertEquals(Layer.Layer3, frame.header.layer);
                 assertTrue(frame.header.hasCrc);
                 assertEquals(256000, frame.header.bitrate);
@@ -440,7 +440,7 @@ class MpegAudioReaderTest extends TestCase {
         assertEquals(inputBytes.length, totalSizeBytes);
     }
 
-    function assertSequenceEquals<T> (expected:Iterable<T>, actual:Iterable<T>) {
+    function assertSequenceEquals<T>(expected:Iterable<T>, actual:Iterable<T>) {
         var expectedIterator = expected.iterator();
         var actualIterator = actual.iterator();
 

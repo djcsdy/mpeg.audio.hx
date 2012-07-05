@@ -16,13 +16,13 @@ class MpegAudioReader {
     static var layers = [null, Layer.Layer3, Layer.Layer2, Layer.Layer1];
 
     static var bitrates = [
-            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-            [0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000,
-                    160000, 192000, 224000, 256000, 320000, null],
-            [0, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 160000,
-                    192000, 224000, 256000, 320000, 384000, null],
-            [0, 32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000,
-                    320000, 352000, 384000, 416000, 448000, null]];
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+    [0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000,
+            160000, 192000, 224000, 256000, 320000, null],
+    [0, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 160000,
+            192000, 224000, 256000, 320000, 384000, null],
+    [0, 32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000,
+            320000, 352000, 384000, 416000, 448000, null]];
 
     static var samplingFrequencies = [44100, 48000, 32000, null];
 
@@ -41,7 +41,7 @@ class MpegAudioReader {
     var bufferCursor:Int;
     var bufferLength:Int;
 
-    public function new (input:Input) {
+    public function new(input:Input) {
         if (input == null) {
             throw "input must not be null";
         }
@@ -54,7 +54,7 @@ class MpegAudioReader {
         bufferLength = 0;
     }
 
-    public function readAll () {
+    public function readAll() {
         if (state != MpegAudioReaderState.Start) {
             throw "Cannot combine calls to readNext and readAll";
         }
@@ -82,7 +82,7 @@ class MpegAudioReader {
         return audio;
     }
 
-    public function readNext () {
+    public function readNext() {
         switch (state) {
             case Start, Seeking:
             return seek();
@@ -98,7 +98,7 @@ class MpegAudioReader {
         }
     }
 
-    function seek () {
+    function seek() {
         bufferCursor = 0;
 
         try {
@@ -121,7 +121,7 @@ class MpegAudioReader {
         }
     }
 
-    function frame () {
+    function frame() {
         var b:Int;
         try {
             b = readByte(1);
@@ -160,8 +160,8 @@ class MpegAudioReader {
 
         if (layer == null || bitrate == null || samplingFrequency == null
                 || emphasis == null) {
-            // This isn't a valid frame.
-            // Seek for another frame starting from the byte after the bogus syncword.
+        // This isn't a valid frame.
+        // Seek for another frame starting from the byte after the bogus syncword.
             state = MpegAudioReaderState.Seeking;
             return yieldUnknown(1);
         }
@@ -217,7 +217,7 @@ class MpegAudioReader {
         return Element.Frame(frame);
     }
 
-    function end () {
+    function end() {
         var unknownElement = yieldUnknown(bufferLength);
 
         if (unknownElement == null) {
@@ -229,7 +229,7 @@ class MpegAudioReader {
         }
     }
 
-    function yieldUnknown (length=-1) {
+    function yieldUnknown(length = -1) {
         if (length == -1) {
             length = bufferCursor;
         }
@@ -241,7 +241,7 @@ class MpegAudioReader {
         return Element.Unknown(yieldBytes(length));
     }
 
-    function yieldBytes (length=-1) {
+    function yieldBytes(length = -1) {
         if (length == -1) {
             length = bufferCursor;
         } else if (length == 0) {
@@ -261,17 +261,17 @@ class MpegAudioReader {
         return bytes;
     }
 
-    inline function assert (condition:Bool) {
+    inline function assert(condition:Bool) {
         if (!condition) {
             throw "MpegAudioReader internal error";
         }
     }
 
-    inline function bufferSpace (bytes = 1) {
+    inline function bufferSpace(bytes = 1) {
         return bufferCursor + bytes <= BUFFER_SIZE;
     }
 
-    inline function readByte (position:Int=-1) {
+    inline function readByte(position:Int = -1) {
         if (position == -1) {
             position = bufferCursor;
         }
@@ -281,12 +281,12 @@ class MpegAudioReader {
         return buffer.get(position);
     }
 
-    inline function readBytes (count:Int) {
+    inline function readBytes(count:Int) {
         readBytesTo(bufferCursor + count);
     }
 
-    inline function readBytesTo (position:Int) {
-        assert (position >= 0 && position < BUFFER_SIZE);
+    inline function readBytesTo(position:Int) {
+        assert(position >= 0 && position < BUFFER_SIZE);
 
         while (bufferLength <= position) {
             buffer.set(bufferLength, input.readByte());
