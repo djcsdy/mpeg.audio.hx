@@ -119,11 +119,11 @@ class MpegAudioReaderTest extends TestCase {
                 assertEquals(256000, frame.bitrate);
                 assertEquals(44100, frame.samplingFrequency);
                 assertEquals(test.hasPadding, frame.hasPadding);
-                assertEquals(false, frame.privateBit);
+                assertFalse(frame.privateBit);
                 assertEquals(Mode.JointStereo, frame.mode);
                 assertEquals(test.modeExtension, frame.modeExtension);
-                assertEquals(false, frame.copyright);
-                assertEquals(true, frame.original);
+                assertFalse(frame.copyright);
+                assertTrue(frame.original);
                 assertEquals(Emphasis.None, frame.emphasis);
                 assertEquals(test.length, frame.frameData.length);
 
@@ -154,12 +154,12 @@ class MpegAudioReaderTest extends TestCase {
                 assertTrue(frame.hasCrc);
                 assertEquals(256000, frame.bitrate);
                 assertEquals(44100, frame.samplingFrequency);
-                assertEquals(false, frame.hasPadding);
-                assertEquals(false, frame.privateBit);
+                assertFalse(frame.hasPadding);
+                assertFalse(frame.privateBit);
                 assertEquals(Mode.JointStereo, frame.mode);
                 assertEquals(0, frame.modeExtension);
-                assertEquals(true, frame.copyright);
-                assertEquals(false, frame.original);
+                assertTrue(frame.copyright);
+                assertFalse(frame.original);
                 assertEquals(emphasis.expected, frame.emphasis);
                 assertEquals(0x343, frame.frameData.length);
 
@@ -281,12 +281,12 @@ class MpegAudioReaderTest extends TestCase {
             assertTrue(resultFrame.hasCrc);
             assertEquals(256000, resultFrame.bitrate);
             assertEquals(44100, resultFrame.samplingFrequency);
-            assertEquals(false, resultFrame.hasPadding);
-            assertEquals(false, resultFrame.privateBit);
+            assertFalse(resultFrame.hasPadding);
+            assertFalse(resultFrame.privateBit);
             assertEquals(Mode.JointStereo, resultFrame.mode);
             assertEquals(0, resultFrame.modeExtension);
-            assertEquals(false, resultFrame.copyright);
-            assertEquals(true, resultFrame.original);
+            assertFalse(resultFrame.copyright);
+            assertTrue(resultFrame.original);
             assertEquals(Emphasis.None, resultFrame.emphasis);
             assertEquals(0x343, resultFrame.frameData.length);
         }
@@ -341,12 +341,12 @@ class MpegAudioReaderTest extends TestCase {
             assertTrue(resultFrame.hasCrc);
             assertEquals(256000, resultFrame.bitrate);
             assertEquals(44100, resultFrame.samplingFrequency);
-            assertEquals(false, resultFrame.hasPadding);
-            assertEquals(false, resultFrame.privateBit);
+            assertFalse(resultFrame.hasPadding);
+            assertFalse(resultFrame.privateBit);
             assertEquals(Mode.JointStereo, resultFrame.mode);
             assertEquals(0, resultFrame.modeExtension);
-            assertEquals(false, resultFrame.copyright);
-            assertEquals(true, resultFrame.original);
+            assertFalse(resultFrame.copyright);
+            assertTrue(resultFrame.original);
             assertEquals(Emphasis.None, resultFrame.emphasis);
             assertEquals(0x343, resultFrame.frameData.length);
 
@@ -382,11 +382,11 @@ class MpegAudioReaderTest extends TestCase {
                 assertEquals(256000, frame.bitrate);
                 assertEquals(44100, frame.samplingFrequency);
                 assertEquals(expectedFrame.hasPadding, frame.hasPadding);
-                assertEquals(false, frame.privateBit);
+                assertFalse(frame.privateBit);
                 assertEquals(Mode.JointStereo, frame.mode);
                 assertEquals(expectedFrame.modeExtension, frame.modeExtension);
-                assertEquals(false, frame.copyright);
-                assertEquals(true, frame.original);
+                assertFalse(frame.copyright);
+                assertTrue(frame.original);
                 assertEquals(Emphasis.None, frame.emphasis);
                 assertEquals(expectedFrame.length, frame.frameData.length);
 
@@ -396,6 +396,48 @@ class MpegAudioReaderTest extends TestCase {
         }
 
         assertEquals(Element.End, reader.readNext());
+    }
+    
+    public function testWholeFileExcludingInfoTag () {
+        var resourceBytes = haxe.Resource.getBytes("acsloop-lame.mp3");
+        var inputBytes = Bytes.alloc(resourceBytes.length - 0x343);
+        inputBytes.blit(0, resourceBytes, 0x343, inputBytes.length);
+        
+        var input = new BytesInput(inputBytes);
+        
+        var reader = new MpegAudioReader(input);
+        
+        var frameCount = 0;
+        var totalSizeBytes = 0;
+        
+        while (true) {
+            var element = reader.readNext();
+            switch (element) {
+                case Frame (frame):
+                assertEquals(Layer.Layer3, frame.layer);
+                assertTrue(frame.hasCrc);
+                assertEquals(256000, frame.bitrate);
+                assertEquals(44100, frame.samplingFrequency);
+                assertFalse(frame.privateBit);
+                assertEquals(Mode.JointStereo, frame.mode);
+                assertTrue(frame.modeExtension == 0 || frame.modeExtension == 2);
+                assertFalse(frame.copyright);
+                assertTrue(frame.original);
+                assertEquals(Emphasis.None, frame.emphasis);
+                assertEquals(if (frame.hasPadding) 0x344 else 0x343, frame.frameData.length);
+                ++frameCount;
+                totalSizeBytes += frame.frameData.length;
+
+                case End:
+                break;
+
+                default:
+                throw "Expected 'Frame' or 'End', but saw '" + element + "'";
+            }
+        }
+
+        assertEquals(247, frameCount);
+        assertEquals(inputBytes.length, totalSizeBytes);
     }
 
     function assertSequenceEquals<T> (expected:Iterable<T>, actual:Iterable<T>) {
