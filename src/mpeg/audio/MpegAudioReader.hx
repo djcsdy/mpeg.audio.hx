@@ -208,8 +208,10 @@ class MpegAudioReader {
             frameData = yieldBytes();
         }
 
-        var frame = new Frame(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
-                privateBit, mode, modeExtension, copyright, original, emphasis, frameData);
+        var header = new FrameHeader(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
+                privateBit, mode, modeExtension, copyright, original, emphasis);
+
+        var frame = new Frame(header, frameData);
 
         state = MpegAudioReaderState.Seeking;
         return Element.Frame(frame);

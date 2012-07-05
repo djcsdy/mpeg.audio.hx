@@ -114,17 +114,17 @@ class MpegAudioReaderTest extends TestCase {
             var element = reader.readNext();
             switch (element) {
                 case Frame(frame):
-                assertEquals(Layer.Layer3, frame.layer);
-                assertTrue(frame.hasCrc);
-                assertEquals(256000, frame.bitrate);
-                assertEquals(44100, frame.samplingFrequency);
-                assertEquals(test.hasPadding, frame.hasPadding);
-                assertFalse(frame.privateBit);
-                assertEquals(Mode.JointStereo, frame.mode);
-                assertEquals(test.modeExtension, frame.modeExtension);
-                assertFalse(frame.copyright);
-                assertTrue(frame.original);
-                assertEquals(Emphasis.None, frame.emphasis);
+                assertEquals(Layer.Layer3, frame.header.layer);
+                assertTrue(frame.header.hasCrc);
+                assertEquals(256000, frame.header.bitrate);
+                assertEquals(44100, frame.header.samplingFrequency);
+                assertEquals(test.hasPadding, frame.header.hasPadding);
+                assertFalse(frame.header.privateBit);
+                assertEquals(Mode.JointStereo, frame.header.mode);
+                assertEquals(test.modeExtension, frame.header.modeExtension);
+                assertFalse(frame.header.copyright);
+                assertTrue(frame.header.original);
+                assertEquals(Emphasis.None, frame.header.emphasis);
                 assertEquals(test.length, frame.frameData.length);
 
                 default:
@@ -150,17 +150,17 @@ class MpegAudioReaderTest extends TestCase {
             var element = reader.readNext();
             switch (element) {
                 case Frame(frame):
-                assertEquals(Layer.Layer3, frame.layer);
-                assertTrue(frame.hasCrc);
-                assertEquals(256000, frame.bitrate);
-                assertEquals(44100, frame.samplingFrequency);
-                assertFalse(frame.hasPadding);
-                assertFalse(frame.privateBit);
-                assertEquals(Mode.JointStereo, frame.mode);
-                assertEquals(0, frame.modeExtension);
-                assertTrue(frame.copyright);
-                assertFalse(frame.original);
-                assertEquals(emphasis.expected, frame.emphasis);
+                assertEquals(Layer.Layer3, frame.header.layer);
+                assertTrue(frame.header.hasCrc);
+                assertEquals(256000, frame.header.bitrate);
+                assertEquals(44100, frame.header.samplingFrequency);
+                assertFalse(frame.header.hasPadding);
+                assertFalse(frame.header.privateBit);
+                assertEquals(Mode.JointStereo, frame.header.mode);
+                assertEquals(0, frame.header.modeExtension);
+                assertTrue(frame.header.copyright);
+                assertFalse(frame.header.original);
+                assertEquals(emphasis.expected, frame.header.emphasis);
                 assertEquals(0x343, frame.frameData.length);
 
                 default:
@@ -277,17 +277,17 @@ class MpegAudioReaderTest extends TestCase {
 
             assertSequenceEquals(garbage, resultGarbage);
 
-            assertEquals(Layer.Layer3, resultFrame.layer);
-            assertTrue(resultFrame.hasCrc);
-            assertEquals(256000, resultFrame.bitrate);
-            assertEquals(44100, resultFrame.samplingFrequency);
-            assertFalse(resultFrame.hasPadding);
-            assertFalse(resultFrame.privateBit);
-            assertEquals(Mode.JointStereo, resultFrame.mode);
-            assertEquals(0, resultFrame.modeExtension);
-            assertFalse(resultFrame.copyright);
-            assertTrue(resultFrame.original);
-            assertEquals(Emphasis.None, resultFrame.emphasis);
+            assertEquals(Layer.Layer3, resultFrame.header.layer);
+            assertTrue(resultFrame.header.hasCrc);
+            assertEquals(256000, resultFrame.header.bitrate);
+            assertEquals(44100, resultFrame.header.samplingFrequency);
+            assertFalse(resultFrame.header.hasPadding);
+            assertFalse(resultFrame.header.privateBit);
+            assertEquals(Mode.JointStereo, resultFrame.header.mode);
+            assertEquals(0, resultFrame.header.modeExtension);
+            assertFalse(resultFrame.header.copyright);
+            assertTrue(resultFrame.header.original);
+            assertEquals(Emphasis.None, resultFrame.header.emphasis);
             assertEquals(0x343, resultFrame.frameData.length);
         }
     }
@@ -337,17 +337,17 @@ class MpegAudioReaderTest extends TestCase {
                 }
             }
 
-            assertEquals(Layer.Layer3, resultFrame.layer);
-            assertTrue(resultFrame.hasCrc);
-            assertEquals(256000, resultFrame.bitrate);
-            assertEquals(44100, resultFrame.samplingFrequency);
-            assertFalse(resultFrame.hasPadding);
-            assertFalse(resultFrame.privateBit);
-            assertEquals(Mode.JointStereo, resultFrame.mode);
-            assertEquals(0, resultFrame.modeExtension);
-            assertFalse(resultFrame.copyright);
-            assertTrue(resultFrame.original);
-            assertEquals(Emphasis.None, resultFrame.emphasis);
+            assertEquals(Layer.Layer3, resultFrame.header.layer);
+            assertTrue(resultFrame.header.hasCrc);
+            assertEquals(256000, resultFrame.header.bitrate);
+            assertEquals(44100, resultFrame.header.samplingFrequency);
+            assertFalse(resultFrame.header.hasPadding);
+            assertFalse(resultFrame.header.privateBit);
+            assertEquals(Mode.JointStereo, resultFrame.header.mode);
+            assertEquals(0, resultFrame.header.modeExtension);
+            assertFalse(resultFrame.header.copyright);
+            assertTrue(resultFrame.header.original);
+            assertEquals(Emphasis.None, resultFrame.header.emphasis);
             assertEquals(0x343, resultFrame.frameData.length);
 
             assertSequenceEquals(garbage, resultGarbage);
@@ -377,17 +377,17 @@ class MpegAudioReaderTest extends TestCase {
             var element = reader.readNext();
             switch (element) {
                 case Frame(frame):
-                assertEquals(Layer.Layer3, frame.layer);
-                assertTrue(frame.hasCrc);
-                assertEquals(256000, frame.bitrate);
-                assertEquals(44100, frame.samplingFrequency);
-                assertEquals(expectedFrame.hasPadding, frame.hasPadding);
-                assertFalse(frame.privateBit);
-                assertEquals(Mode.JointStereo, frame.mode);
-                assertEquals(expectedFrame.modeExtension, frame.modeExtension);
-                assertFalse(frame.copyright);
-                assertTrue(frame.original);
-                assertEquals(Emphasis.None, frame.emphasis);
+                assertEquals(Layer.Layer3, frame.header.layer);
+                assertTrue(frame.header.hasCrc);
+                assertEquals(256000, frame.header.bitrate);
+                assertEquals(44100, frame.header.samplingFrequency);
+                assertEquals(expectedFrame.hasPadding, frame.header.hasPadding);
+                assertFalse(frame.header.privateBit);
+                assertEquals(Mode.JointStereo, frame.header.mode);
+                assertEquals(expectedFrame.modeExtension, frame.header.modeExtension);
+                assertFalse(frame.header.copyright);
+                assertTrue(frame.header.original);
+                assertEquals(Emphasis.None, frame.header.emphasis);
                 assertEquals(expectedFrame.length, frame.frameData.length);
 
                 default:
@@ -414,17 +414,17 @@ class MpegAudioReaderTest extends TestCase {
             var element = reader.readNext();
             switch (element) {
                 case Frame (frame):
-                assertEquals(Layer.Layer3, frame.layer);
-                assertTrue(frame.hasCrc);
-                assertEquals(256000, frame.bitrate);
-                assertEquals(44100, frame.samplingFrequency);
-                assertFalse(frame.privateBit);
-                assertEquals(Mode.JointStereo, frame.mode);
-                assertTrue(frame.modeExtension == 0 || frame.modeExtension == 2);
-                assertFalse(frame.copyright);
-                assertTrue(frame.original);
-                assertEquals(Emphasis.None, frame.emphasis);
-                assertEquals(if (frame.hasPadding) 0x344 else 0x343, frame.frameData.length);
+                assertEquals(Layer.Layer3, frame.header.layer);
+                assertTrue(frame.header.hasCrc);
+                assertEquals(256000, frame.header.bitrate);
+                assertEquals(44100, frame.header.samplingFrequency);
+                assertFalse(frame.header.privateBit);
+                assertEquals(Mode.JointStereo, frame.header.mode);
+                assertTrue(frame.header.modeExtension == 0 || frame.header.modeExtension == 2);
+                assertFalse(frame.header.copyright);
+                assertTrue(frame.header.original);
+                assertEquals(Emphasis.None, frame.header.emphasis);
+                assertEquals(if (frame.header.hasPadding) 0x344 else 0x343, frame.frameData.length);
                 ++frameCount;
                 totalSizeBytes += frame.frameData.length;
 
