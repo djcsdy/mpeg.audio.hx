@@ -440,6 +440,40 @@ class MpegAudioReaderTest extends TestCase {
         assertEquals(inputBytes.length, totalSizeBytes);
     }
 
+    public function testInfoTag() {
+        var resourceBytes = haxe.Resource.getBytes("acsloop-lame.mp3");
+        var inputBytes = Bytes.alloc(0x343);
+        inputBytes.blit(0, resourceBytes, 0, 0x343);
+
+        var input = new BytesInput(inputBytes);
+
+        var reader = new MpegAudioReader(input);
+
+        var element = reader.readNext();
+        switch (element) {
+            case Info(info):
+            assertEquals(Layer.Layer3, info.header.layer);
+            assertTrue(info.header.hasCrc);
+            assertEquals(256000, info.header.bitrate);
+            assertEquals(44100, info.header.samplingFrequency);
+            assertFalse(info.header.hasPadding);
+            assertFalse(info.header.privateBit);
+            assertEquals(Mode.JointStereo, info.header.mode);
+            assertEquals(2, info.header.modeExtension);
+            assertFalse(info.header.copyright);
+            assertTrue(info.header.original);
+            assertEquals(Emphasis.None, info.header.emphasis);
+            assertEquals(576, info.encoderDelay);
+            assertEquals(1728, info.endPadding);
+            assertEquals(0x343, info.frameData.length);
+
+            default:
+            throw "Expected 'Info', but saw '" + element + "'";
+        }
+
+        assertEquals(Element.End, reader.readNext());
+    }
+
     function assertSequenceEquals<T>(expected:Iterable<T>, actual:Iterable<T>) {
         var expectedIterator = expected.iterator();
         var actualIterator = actual.iterator();

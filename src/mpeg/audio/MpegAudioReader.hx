@@ -239,28 +239,28 @@ class MpegAudioReader {
     }
 
     function readInfoTag(header:FrameHeader, frameData:Bytes) {
-        var i = 4;
-        while (i < frameData.length - INFO_TAG_SIZE) {
-            if (frameData.get(i) != 0) {
+        var infoTagStart = 4;
+        while (infoTagStart < frameData.length - INFO_TAG_SIZE) {
+            if (frameData.get(infoTagStart) != 0) {
                 break;
             }
-            ++i;
+            ++infoTagStart;
         }
 
-        if (i >= frameData.length - INFO_TAG_SIZE) {
+        if (infoTagStart >= frameData.length - INFO_TAG_SIZE) {
             return null;
         }
 
-        if (frameData.sub(i, infoTagSignature.length)
+        if (frameData.sub(infoTagStart, infoTagSignature.length)
                         .compare(infoTagSignature) != 0
-                && frameData.sub(i, xingTagSignature.length)
+                && frameData.sub(infoTagStart, xingTagSignature.length)
                         .compare(xingTagSignature) != 0) {
             return null;
         }
 
-        var b0 = frameData.get(0x8d);
-        var b1 = frameData.get(0x8e);
-        var b2 = frameData.get(0x8f);
+        var b0 = frameData.get(infoTagStart + 0x8d);
+        var b1 = frameData.get(infoTagStart + 0x8e);
+        var b2 = frameData.get(infoTagStart + 0x8f);
 
         var encoderDelay = ((b0 << 4) & 0xff0) | ((b1 >> 4) &0xf);
         var endPadding = ((b1 << 8) & 0xf00) | (b2 & 0xff);
