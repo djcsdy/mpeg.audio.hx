@@ -11,7 +11,11 @@ class MpegAudioReader {
     // This is the next-largest power-of-two.
     static inline var BUFFER_SIZE = 4096;
 
-    static inline var FRAME_HEADER_SIZE = 4;
+    static inline var INFO_TAG_SIZE = 348;
+
+    static var infoTagSignature = Bytes.ofString("Info");
+
+    static var xingTagSignature = Bytes.ofString("Xing");
 
     static var layers = [null, Layer.Layer3, Layer.Layer2, Layer.Layer1];
 
@@ -37,6 +41,8 @@ class MpegAudioReader {
     var input:Input;
     var state:MpegAudioReaderState;
 
+    var seenFirstFrame:Bool;
+
     var buffer:Bytes;
     var bufferCursor:Int;
     var bufferLength:Int;
@@ -48,6 +54,8 @@ class MpegAudioReader {
 
         this.input = input;
         this.state = MpegAudioReaderState.Start;
+
+        seenFirstFrame = false;
 
         buffer = Bytes.alloc(BUFFER_SIZE);
         bufferCursor = 0;
@@ -68,6 +76,9 @@ class MpegAudioReader {
                 case Frame(frame):
                 frames.push(frame);
 
+                case Info(info):
+                // TODO
+
                 case Unknown(bytes):
                 // TODO
 
@@ -87,7 +98,7 @@ class MpegAudioReader {
             case Start, Seeking:
             return seek();
 
-            case Frame:
+            case  Frame:
             return frame();
 
             case End:
@@ -211,10 +222,44 @@ class MpegAudioReader {
         var header = new FrameHeader(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
                 privateBit, mode, modeExtension, copyright, original, emphasis);
 
+        if (!seenFirstFrame) {
+            seenFirstFrame = true;
+
+            var infoTag = readInfoTag(header, frameData);
+            if (infoTag != null) {
+                state = MpegAudioReaderState.Seeking;
+                return Element.Info(infoTag);
+            }
+        }
+
         var frame = new Frame(header, frameData);
 
         state = MpegAudioReaderState.Seeking;
         return Element.Frame(frame);
+    }
+
+    function readInfoTag(header:FrameHeader, frameData:Bytes) {
+        var i = 4;
+        while (i < frameData.length - INFO_TAG_SIZE) {
+            if (frameData.get(i) != 0) {
+                break;
+            }
+            ++i;
+        }
+
+        if (i >= frameData.length - INFO_TAG_SIZE) {
+            return null;
+        }
+
+        if (frameData.sub(i, infoTagSignature.length)
+                        .compare(infoTagSignature) != 0
+                && frameData.sub(i, xingTagSignature.length)
+                        .compare(xingTagSignature) != 0) {
+            return null;
+        }
+
+        // TODO
+        return null;
     }
 
     function end() {
