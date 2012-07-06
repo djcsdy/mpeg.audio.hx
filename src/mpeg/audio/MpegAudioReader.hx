@@ -258,8 +258,14 @@ class MpegAudioReader {
             return null;
         }
 
-        // TODO
-        return null;
+        var b0 = frameData.get(0x8d);
+        var b1 = frameData.get(0x8e);
+        var b2 = frameData.get(0x8f);
+
+        var encoderDelay = ((b0 << 4) & 0xff0) | ((b1 >> 4) &0xf);
+        var endPadding = ((b1 << 8) & 0xf00) | (b2 & 0xff);
+
+        return new Info(header, encoderDelay, endPadding, frameData);
     }
 
     function end() {

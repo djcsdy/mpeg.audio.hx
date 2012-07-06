@@ -1,8 +1,15 @@
 package mpeg.audio;
+import haxe.io.Bytes;
 class Info {
     public var header(default, null):FrameHeader;
+    public var encoderDelay(default, null):Int;
+    public var endPadding(default, null):Int;
+    public var frameData(default, null):Bytes;
 
-    public function new(header:FrameHeader) {
+    public function new(header:FrameHeader, encoderDelay:Int, endPadding:Int, frameData:Bytes) {
         this.header = header;
+        this.encoderDelay = encoderDelay;
+        this.endPadding = endPadding;
+        this.frameData = frameData;
     }
 }
