@@ -17,18 +17,33 @@ class MpegAudioReader {
 
     static var xingTagSignature = Bytes.ofString("Xing");
 
+    static var versions = [ MpegVersion.Version25, null, MpegVersion.Version2, MpegVersion.Version1 ];
+
     static var layers = [null, Layer.Layer3, Layer.Layer2, Layer.Layer1];
 
-    static var bitrates = [
-    [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
-    [0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000,
-            160000, 192000, 224000, 256000, 320000, null],
-    [0, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 160000,
-            192000, 224000, 256000, 320000, 384000, null],
-    [0, 32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000,
-            320000, 352000, 384000, 416000, 448000, null]];
+    static var version1Bitrates = [
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [0, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000,
+                    160000, 192000, 224000, 256000, 320000, null],
+            [0, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 160000,
+                    192000, 224000, 256000, 320000, 384000, null],
+            [0, 32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000,
+                    320000, 352000, 384000, 416000, 448000, null]];
 
-    static var samplingFrequencies = [44100, 48000, 32000, null];
+    static var version2Bitrates = [
+            [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+            [0, 8000, 16000, 24000, 32000, 40000, 48000, 56000, 64000, 80000, 96000,
+                    112000, 128000, 144000, 160000, null],
+            [0, 8000, 16000, 24000, 32000, 40000, 48000, 56000, 64000, 80000, 96000,
+                    112000, 128000, 144000, 160000, null],
+            [0, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000,
+                    176000, 192000, 224000, 256000, null]];
+
+    static var samplingFrequenciesByVersionIndex = [
+            [11025, 12000, 8000, null],
+            [null, null, null, null],
+            [22050, 24000, 12000, null],
+            [44100, 48000, 32000, null]];
 
     static var modes = [Mode.Stereo, Mode.JointStereo, Mode.DualChannel, Mode.SingleChannel];
 
@@ -119,7 +134,7 @@ class MpegAudioReader {
                         return yieldUnknown();
                     }
                 } while (readByte() != 0xff);
-            } while ((readByte() & 0xf8) != 0xf8);
+            } while ((readByte() & 0x80) != 0x80);
         } catch (eof:Eof) {
             return end();
         }
@@ -139,6 +154,7 @@ class MpegAudioReader {
         } catch (eof:Eof) {
             return end();
         }
+        var versionIndex = (b >> 3) & 0x3;
         var layerIndex = (b >> 1) & 0x3;
         var hasCrc = b & 1 == 1;
 
@@ -163,14 +179,18 @@ class MpegAudioReader {
         var original = (b >> 2) & 1 == 1;
         var emphasisIndex = b & 0x3;
 
+        var version = versions[versionIndex];
         var layer = layers[layerIndex];
-        var bitrate = bitrates[layerIndex][bitrateIndex];
-        var samplingFrequency = samplingFrequencies[samplingFrequencyIndex];
+        var bitrate = switch (version) {
+            case Version1: version1Bitrates[layerIndex][bitrateIndex];
+            case Version2, Version25: version2Bitrates[layerIndex][bitrateIndex];
+        }
+        var samplingFrequency = samplingFrequenciesByVersionIndex[versionIndex][samplingFrequencyIndex];
         var mode = modes[modeIndex];
         var emphasis = emphases[emphasisIndex];
 
-        if (layer == null || bitrate == null || samplingFrequency == null
-                || emphasis == null) {
+        if (version == null || layer == null || bitrate == null
+                || samplingFrequency == null || emphasis == null) {
             // This isn't a valid frame.
             // Seek for another frame starting from the byte after the bogus syncword.
             state = MpegAudioReaderState.Seeking;
@@ -219,7 +239,7 @@ class MpegAudioReader {
             frameData = yieldBytes();
         }
 
-        var header = new FrameHeader(layer, hasCrc, bitrate, samplingFrequency, hasPadding,
+        var header = new FrameHeader(version, layer, hasCrc, bitrate, samplingFrequency, hasPadding,
                 privateBit, mode, modeExtension, copyright, original, emphasis);
 
         if (!seenFirstFrame) {

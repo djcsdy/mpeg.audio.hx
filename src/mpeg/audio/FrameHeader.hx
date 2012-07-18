@@ -3,6 +3,7 @@ package mpeg.audio;
 import haxe.io.Bytes;
 
 class FrameHeader {
+    public var version(default, null):MpegVersion;
     public var layer(default, null):Layer;
     public var hasCrc(default, null):Bool;
     public var bitrate(default, null):Int;
@@ -15,9 +16,10 @@ class FrameHeader {
     public var original(default, null):Bool;
     public var emphasis(default, null):Emphasis;
 
-    public function new(layer:Layer, hasCrc:Bool, bitrate:Int, samplingFrequency:Int, hasPadding:Bool,
-                        privateBit:Bool, mode:Mode, modeExtension:Int, copyright:Bool, original:Bool,
+    public function new(version:MpegVersion, layer:Layer, hasCrc:Bool, bitrate:Int, samplingFrequency:Int,
+                        hasPadding:Bool, privateBit:Bool, mode:Mode, modeExtension:Int, copyright:Bool, original:Bool,
                         emphasis:Emphasis) {
+        this.version = version;
         this.layer = layer;
         this.hasCrc = hasCrc;
         this.bitrate = bitrate;
