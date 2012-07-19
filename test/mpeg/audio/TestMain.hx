@@ -14,6 +14,7 @@ class TestMain {
 
         var testRunner = new TestRunner();
         testRunner.add(new MpegAudioReaderTest());
+        testRunner.add(new UtilsTest());
         testRunner.run();
     }
 }

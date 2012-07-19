@@ -84,6 +84,9 @@ class MpegAudioReader {
 
         var frames:Array<Frame> = [];
 
+        var encoderDelay:Int = 0;
+        var endPadding:Int = 0;
+
         while (true) {
             var element = readNext();
 
@@ -92,18 +95,18 @@ class MpegAudioReader {
                 frames.push(frame);
 
                 case Info(info):
-                // TODO
+                encoderDelay = info.encoderDelay;
+                endPadding = info.endPadding;
 
                 case Unknown(bytes):
-                // TODO
+                // Discard unknown bytes
 
                 case End:
                 break;
             }
         }
 
-        var audio = new MpegAudio();
-        audio.frames = frames;
+        var audio = new MpegAudio(frames, encoderDelay, endPadding);
 
         return audio;
     }
