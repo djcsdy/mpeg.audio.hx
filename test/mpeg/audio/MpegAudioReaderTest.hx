@@ -463,12 +463,21 @@ class MpegAudioReaderTest extends TestCase {
             assertFalse(info.header.copyright);
             assertTrue(info.header.original);
             assertEquals(Emphasis.None, info.header.emphasis);
-            assertEquals(576, info.encoderDelay);
-            assertEquals(1728, info.endPadding);
+            assertEquals(0x24, info.infoStartIndex);
             assertEquals(0x343, info.frameData.length);
 
             default:
             throw "Expected 'Info', but saw '" + element + "'";
+        }
+
+        element = reader.readNext();
+        switch (element) {
+            case GaplessInfo(encoderDelay, endPadding):
+            assertEquals(576, encoderDelay);
+            assertEquals(1728, endPadding);
+
+            default:
+            throw "Expected 'GaplessInfo', but saw '" + element + "'";
         }
 
         assertEquals(Element.End, reader.readNext());
@@ -498,13 +507,22 @@ class MpegAudioReaderTest extends TestCase {
             assertFalse(info.header.copyright);
             assertTrue(info.header.original);
             assertEquals(Emphasis.None, info.header.emphasis);
-            assertEquals(576, info.encoderDelay);
-            assertEquals(1728, info.endPadding);
+            assertEquals(0x24, info.infoStartIndex);
             assertEquals(0x343, info.frameData.length);
             totalSizeBytes += info.frameData.length;
 
             default:
             throw "Expected 'Info', but saw '" + element + "'";
+        }
+
+        element = reader.readNext();
+        switch (element) {
+            case GaplessInfo(encoderDelay, endPadding):
+            assertEquals(576, encoderDelay);
+            assertEquals(1728, endPadding);
+
+            default:
+            throw "Expected 'GaplessInfo', but saw '" + element + "'";
         }
 
         while (true) {

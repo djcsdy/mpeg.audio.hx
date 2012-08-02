@@ -95,8 +95,11 @@ class MpegAudioReader {
                 frames.push(frame);
 
                 case Info(info):
-                encoderDelay = info.encoderDelay;
-                endPadding = info.endPadding;
+                // Discard info tag.
+
+                case GaplessInfo(giEncoderDelay, giEndPadding):
+                encoderDelay = giEncoderDelay;
+                endPadding = giEndPadding;
 
                 case Unknown(bytes):
                 // Discard unknown bytes
@@ -115,6 +118,9 @@ class MpegAudioReader {
         switch (state) {
             case Start, Seeking:
             return seek();
+
+            case Info(info):
+            return infoTagGaplessInfo(info);
 
             case  Frame:
             return frame();
@@ -248,10 +254,10 @@ class MpegAudioReader {
         if (!seenFirstFrame) {
             seenFirstFrame = true;
 
-            var infoTag = readInfoTag(header, frameData);
-            if (infoTag != null) {
-                state = MpegAudioReaderState.Seeking;
-                return Element.Info(infoTag);
+            var info = readInfo(header, frameData);
+            if (info != null) {
+                state = MpegAudioReaderState.Info(info);
+                return Element.Info(info);
             }
         }
 
@@ -261,34 +267,39 @@ class MpegAudioReader {
         return Element.Frame(frame);
     }
 
-    function readInfoTag(header:FrameHeader, frameData:Bytes) {
-        var infoTagStart = 4;
-        while (infoTagStart < frameData.length - INFO_TAG_SIZE) {
-            if (frameData.get(infoTagStart) != 0) {
+    function readInfo(header:FrameHeader, frameData:Bytes) {
+        var startIndex = 4;
+        while (startIndex < frameData.length - INFO_TAG_SIZE) {
+            if (frameData.get(startIndex) != 0) {
                 break;
             }
-            ++infoTagStart;
+            ++startIndex;
         }
 
-        if (infoTagStart >= frameData.length - INFO_TAG_SIZE) {
+        if (startIndex >= frameData.length - INFO_TAG_SIZE) {
             return null;
         }
 
-        if (frameData.sub(infoTagStart, infoTagSignature.length)
-                        .compare(infoTagSignature) != 0
-                && frameData.sub(infoTagStart, xingTagSignature.length)
-                        .compare(xingTagSignature) != 0) {
+        if (frameData.sub(startIndex, infoTagSignature.length)
+                        .compare(infoTagSignature) == 0
+                || frameData.sub(startIndex, xingTagSignature.length)
+                        .compare(xingTagSignature) == 0) {
+            return new Info(header, startIndex, frameData);
+        } else {
             return null;
         }
+    }
 
-        var b0 = frameData.get(infoTagStart + 0x8d);
-        var b1 = frameData.get(infoTagStart + 0x8e);
-        var b2 = frameData.get(infoTagStart + 0x8f);
+    function infoTagGaplessInfo(info:Info) {
+        var b0 = info.frameData.get(info.infoStartIndex + 0x8d);
+        var b1 = info.frameData.get(info.infoStartIndex + 0x8e);
+        var b2 = info.frameData.get(info.infoStartIndex + 0x8f);
 
         var encoderDelay = ((b0 << 4) & 0xff0) | ((b1 >> 4) &0xf);
         var endPadding = ((b1 << 8) & 0xf00) | (b2 & 0xff);
 
-        return new Info(header, encoderDelay, endPadding, frameData);
+        state = MpegAudioReaderState.Seeking;
+        return Element.GaplessInfo(encoderDelay, endPadding);
     }
 
     function end() {
@@ -375,6 +386,7 @@ private enum MpegAudioReaderState {
     Start;
     Seeking;
     Frame;
+    Info(info:Info);
     End;
     Ended;
 }
