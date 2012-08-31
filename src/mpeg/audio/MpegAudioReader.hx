@@ -51,7 +51,7 @@ class MpegAudioReader {
 
     static var slotSizeByLayerIndex = [0, 1, 1, 4];
 
-    static var slotsPerBitPerSampleByLayerIndex = [0, 144, 12, 12];
+    static var slotsPerBitPerSampleByLayerIndex = [0, 144, 144, 12];
 
     var input:Input;
     var state:MpegAudioReaderState;
