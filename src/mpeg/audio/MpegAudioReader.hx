@@ -254,10 +254,12 @@ class MpegAudioReader {
         if (!seenFirstFrame) {
             seenFirstFrame = true;
 
-            var info = readInfo(header, frameData);
-            if (info != null) {
-                state = MpegAudioReaderState.Info(info);
-                return Element.Info(info);
+            if (layer == Layer.Layer3) {
+                var info = readInfo(header, frameData);
+                if (info != null) {
+                    state = MpegAudioReaderState.Info(info);
+                    return Element.Info(info);
+                }
             }
         }
 
