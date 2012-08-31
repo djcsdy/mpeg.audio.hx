@@ -42,7 +42,7 @@ class MpegAudioReader {
     static var samplingFrequenciesByVersionIndex = [
             [11025, 12000, 8000, null],
             [null, null, null, null],
-            [22050, 24000, 12000, null],
+            [22050, 24000, 16000, null],
             [44100, 48000, 32000, null]];
 
     static var modes = [Mode.Stereo, Mode.JointStereo, Mode.DualChannel, Mode.SingleChannel];
