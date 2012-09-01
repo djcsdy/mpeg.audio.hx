@@ -22,10 +22,18 @@ class UtilsTest extends TestCase {
                     new Frame(
                             new FrameHeader(MpegVersion.Version25, Layer.Layer2, true, 24000, 11025, false, false,
                                     Mode.JointStereo, 0, false, false, Emphasis.None),
+                            Bytes.alloc(0)),
+                    new Frame(
+                            new FrameHeader(MpegVersion.Version2, Layer.Layer2, true, 24000, 22050, false, false,
+                                    Mode.JointStereo, 0, false, false, Emphasis.None),
+                            Bytes.alloc(0)),
+                    new Frame(
+                            new FrameHeader(MpegVersion.Version25, Layer.Layer3, true, 128000, 11025, false, false,
+                                    Mode.JointStereo, 0, false, false, Emphasis.None),
                             Bytes.alloc(0))
                 ],
                 123, 456);
 
-        assertEquals(1725, Utils.calculateAudioLengthSamples(mpegAudio));
+        assertEquals(3837, Utils.calculateAudioLengthSamples(mpegAudio));
     }
 }
