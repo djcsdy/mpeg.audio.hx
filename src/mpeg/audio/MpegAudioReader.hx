@@ -11,7 +11,9 @@ class MpegAudioReader {
     // This is the next-largest power-of-two.
     static inline var BUFFER_SIZE = 4096;
 
-    static inline var INFO_TAG_SIZE = 348;
+    static inline var HEADER_SIZE = 4;
+
+    static inline var CRC_SIZE = 4;
 
     static var infoTagSignature = Bytes.ofString("Info");
 
@@ -270,23 +272,32 @@ class MpegAudioReader {
     }
 
     function readInfo(header:FrameHeader, frameData:Bytes) {
-        var startIndex = 4;
-        while (startIndex < frameData.length - INFO_TAG_SIZE) {
-            if (frameData.get(startIndex) != 0) {
-                break;
+        var sideInformationSize = switch (header.version) {
+            case MpegVersion.Version1: switch (header.mode) {
+                case Mode.Stereo, Mode.JointStereo, Mode.DualChannel: 32;
+                case Mode.SingleChannel: 17;
+            };
+            case MpegVersion.Version2, MpegVersion.Version25: switch (header.mode) {
+                case Mode.Stereo, Mode.JointStereo, Mode.DualChannel: 17;
+                case Mode.SingleChannel: 9;
             }
-            ++startIndex;
+        };
+
+        var sideInformationStartIndex = HEADER_SIZE + (if (header.hasCrc) CRC_SIZE else 0);
+
+        var infoStartIndex = sideInformationStartIndex + sideInformationSize;
+
+        for (i in sideInformationStartIndex...infoStartIndex) {
+            if (frameData.get(i) != 0) {
+                return null;
+            }
         }
 
-        if (startIndex >= frameData.length - INFO_TAG_SIZE) {
-            return null;
-        }
-
-        if (frameData.sub(startIndex, infoTagSignature.length)
+        if (frameData.sub(infoStartIndex, infoTagSignature.length)
                         .compare(infoTagSignature) == 0
-                || frameData.sub(startIndex, xingTagSignature.length)
+                || frameData.sub(infoStartIndex, xingTagSignature.length)
                         .compare(xingTagSignature) == 0) {
-            return new Info(header, startIndex, frameData);
+            return new Info(header, infoStartIndex, frameData);
         } else {
             return null;
         }
