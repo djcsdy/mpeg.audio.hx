@@ -165,7 +165,7 @@ class MpegAudioReader {
         }
         var versionIndex = (b >> 3) & 0x3;
         var layerIndex = (b >> 1) & 0x3;
-        var hasCrc = b & 1 == 1;
+        var hasCrc = b & 1 == 0;
 
         try {
             b = readByte(2);

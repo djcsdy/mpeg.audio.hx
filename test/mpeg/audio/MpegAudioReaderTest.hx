@@ -115,7 +115,7 @@ class MpegAudioReaderTest extends TestCase {
             switch (element) {
                 case Frame(frame):
                 assertEquals(Layer.Layer3, frame.header.layer);
-                assertTrue(frame.header.hasCrc);
+                assertFalse(frame.header.hasCrc);
                 assertEquals(256000, frame.header.bitrate);
                 assertEquals(44100, frame.header.samplingFrequency);
                 assertEquals(test.hasPadding, frame.header.hasPadding);
@@ -151,7 +151,7 @@ class MpegAudioReaderTest extends TestCase {
             switch (element) {
                 case Frame(frame):
                 assertEquals(Layer.Layer3, frame.header.layer);
-                assertTrue(frame.header.hasCrc);
+                assertFalse(frame.header.hasCrc);
                 assertEquals(256000, frame.header.bitrate);
                 assertEquals(44100, frame.header.samplingFrequency);
                 assertFalse(frame.header.hasPadding);
@@ -278,7 +278,7 @@ class MpegAudioReaderTest extends TestCase {
             assertSequenceEquals(garbage, resultGarbage);
 
             assertEquals(Layer.Layer3, resultFrame.header.layer);
-            assertTrue(resultFrame.header.hasCrc);
+            assertFalse(resultFrame.header.hasCrc);
             assertEquals(256000, resultFrame.header.bitrate);
             assertEquals(44100, resultFrame.header.samplingFrequency);
             assertFalse(resultFrame.header.hasPadding);
@@ -338,7 +338,7 @@ class MpegAudioReaderTest extends TestCase {
             }
 
             assertEquals(Layer.Layer3, resultFrame.header.layer);
-            assertTrue(resultFrame.header.hasCrc);
+            assertFalse(resultFrame.header.hasCrc);
             assertEquals(256000, resultFrame.header.bitrate);
             assertEquals(44100, resultFrame.header.samplingFrequency);
             assertFalse(resultFrame.header.hasPadding);
@@ -378,7 +378,7 @@ class MpegAudioReaderTest extends TestCase {
             switch (element) {
                 case Frame(frame):
                 assertEquals(Layer.Layer3, frame.header.layer);
-                assertTrue(frame.header.hasCrc);
+                assertFalse(frame.header.hasCrc);
                 assertEquals(256000, frame.header.bitrate);
                 assertEquals(44100, frame.header.samplingFrequency);
                 assertEquals(expectedFrame.hasPadding, frame.header.hasPadding);
@@ -415,7 +415,7 @@ class MpegAudioReaderTest extends TestCase {
             switch (element) {
                 case Frame(frame):
                 assertEquals(Layer.Layer3, frame.header.layer);
-                assertTrue(frame.header.hasCrc);
+                assertFalse(frame.header.hasCrc);
                 assertEquals(256000, frame.header.bitrate);
                 assertEquals(44100, frame.header.samplingFrequency);
                 assertFalse(frame.header.privateBit);
@@ -453,7 +453,7 @@ class MpegAudioReaderTest extends TestCase {
         switch (element) {
             case Info(info):
             assertEquals(Layer.Layer3, info.header.layer);
-            assertTrue(info.header.hasCrc);
+            assertFalse(info.header.hasCrc);
             assertEquals(256000, info.header.bitrate);
             assertEquals(44100, info.header.samplingFrequency);
             assertFalse(info.header.hasPadding);
@@ -497,7 +497,7 @@ class MpegAudioReaderTest extends TestCase {
         switch (element) {
             case Info(info):
             assertEquals(Layer.Layer3, info.header.layer);
-            assertTrue(info.header.hasCrc);
+            assertFalse(info.header.hasCrc);
             assertEquals(256000, info.header.bitrate);
             assertEquals(44100, info.header.samplingFrequency);
             assertFalse(info.header.hasPadding);
@@ -530,7 +530,7 @@ class MpegAudioReaderTest extends TestCase {
             switch (element) {
                 case Frame(frame):
                 assertEquals(Layer.Layer3, frame.header.layer);
-                assertTrue(frame.header.hasCrc);
+                assertFalse(frame.header.hasCrc);
                 assertEquals(256000, frame.header.bitrate);
                 assertEquals(44100, frame.header.samplingFrequency);
                 assertFalse(frame.header.privateBit);
