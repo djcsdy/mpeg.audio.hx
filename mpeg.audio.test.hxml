@@ -6,6 +6,7 @@
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 -resource test-resources/Sad.mp3@Sad.mp3
+-resource test-resources/bipbop.mp3@bipbop.mp3
 --no-inline
 -D fdb
 -debug
@@ -18,6 +19,7 @@
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 -resource test-resources/Sad.mp3@Sad.mp3
+-resource test-resources/bipbop.mp3@bipbop.mp3
 --no-inline
 -debug
 --next
@@ -29,6 +31,7 @@
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 -resource test-resources/Sad.mp3@Sad.mp3
+-resource test-resources/bipbop.mp3@bipbop.mp3
 --no-inline
 -debug
 --next
@@ -40,6 +43,7 @@
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 -resource test-resources/Sad.mp3@Sad.mp3
+-resource test-resources/bipbop.mp3@bipbop.mp3
 --no-inline
 -debug
 --next
@@ -51,6 +55,7 @@
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
 -resource test-resources/Sad.mp3@Sad.mp3
+-resource test-resources/bipbop.mp3@bipbop.mp3
 --no-inline
 -debug
 --next
