@@ -555,6 +555,83 @@ class MpegAudioReaderTest extends TestCase {
         assertEquals(inputBytes.length, totalSizeBytes);
     }
 
+    public function testSadMp3() {
+        var inputBytes = haxe.Resource.getBytes("Sad.mp3");
+
+        var input = new BytesInput(inputBytes);
+
+        var reader = new MpegAudioReader(input);
+
+        var totalSizeBytes = 0;
+
+        var element = reader.readNext();
+        switch (element) {
+            case Info(info):
+            assertEquals(Layer.Layer3, info.header.layer);
+            assertFalse(info.header.hasCrc);
+            assertEquals(64000, info.header.bitrate);
+            assertEquals(22050, info.header.samplingFrequency);
+            assertFalse(info.header.hasPadding);
+            assertFalse(info.header.privateBit);
+            assertEquals(Mode.JointStereo, info.header.mode);
+            assertEquals(2, info.header.modeExtension);
+            assertFalse(info.header.copyright);
+            assertTrue(info.header.original);
+            assertEquals(Emphasis.None, info.header.emphasis);
+            assertEquals(0x15, info.infoStartIndex);
+            assertEquals(0xd0, info.frameData.length);
+            totalSizeBytes += info.frameData.length;
+
+            default:
+            throw "Expected 'Info', but saw '" + element + "'";
+        }
+
+        element = reader.readNext();
+        switch (element) {
+            case GaplessInfo(encoderDelay, endPadding):
+            assertEquals(576, encoderDelay);
+            assertEquals(1435, endPadding);
+
+            default:
+            throw "Expected 'GaplessInfo', but saw '" + element + "'";
+        }
+
+        var bitrates = [32000, 56000, 56000, 48000, 48000, 48000, 40000, 32000, 32000, 32000, 32000, 32000,
+                24000, 32000, 40000, 8000, 8000];
+
+        var frameDataLengths = [104, 182, 182, 156, 156, 156, 130, 104, 104, 104, 104, 104, 78, 104, 130, 26, 26];
+
+        for (i in 0...17) {
+            element = reader.readNext();
+            switch (element) {
+                case Frame(frame):
+                assertEquals(Layer.Layer3, frame.header.layer);
+                assertFalse(frame.header.hasCrc);
+                assertEquals(bitrates[i], frame.header.bitrate);
+                assertEquals(22050, frame.header.samplingFrequency);
+                assertEquals(false, frame.header.hasPadding);
+                assertFalse(frame.header.privateBit);
+                assertEquals(Mode.JointStereo, frame.header.mode);
+                assertTrue(frame.header.modeExtension == 0 || frame.header.modeExtension == 2);
+                assertFalse(frame.header.copyright);
+                assertTrue(frame.header.original);
+                assertEquals(Emphasis.None, frame.header.emphasis);
+                assertEquals(frameDataLengths[i], frame.frameData.length);
+                totalSizeBytes += frame.frameData.length;
+
+                default:
+                throw "Expected 'Frame', but saw '" + element + "'";
+            }
+        }
+
+        element = reader.readNext();
+        if (element != Element.End) {
+            throw "Expected 'End', but saw '" + element + "'";
+        }
+
+        assertEquals(inputBytes.length, totalSizeBytes);
+    }
+
     function assertSequenceEquals<T>(expected:Iterable<T>, actual:Iterable<T>) {
         var expectedIterator = expected.iterator();
         var actualIterator = actual.iterator();

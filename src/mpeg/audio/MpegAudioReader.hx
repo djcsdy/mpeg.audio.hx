@@ -53,7 +53,11 @@ class MpegAudioReader {
 
     static var slotSizeByLayerIndex = [0, 1, 1, 4];
 
-    static var slotsPerBitPerSampleByLayerIndex = [0, 144, 144, 12];
+    static var slotsPerBitPerSampleByLayerIndexByVersionIndex = [
+            [null, 72, 144, 12],
+            null,
+            [null, 72, 144, 12],
+            [null, 144, 144, 12]];
 
     var input:Input;
     var state:MpegAudioReaderState;
@@ -232,12 +236,16 @@ class MpegAudioReader {
             var frameLengthSlots = Math.floor(frameLengthBytes / slotSizeByLayerIndex[layerIndex]);
 
             bitrate = Math.floor(samplingFrequency * frameLengthSlots
-                    / slotsPerBitPerSampleByLayerIndex[layerIndex]); // TODO should bitrate be Float?
+                    / slotsPerBitPerSampleByLayerIndexByVersionIndex[versionIndex][layerIndex]); // TODO should bitrate be Float?
 
             frameData = yieldBytes(frameLengthBytes);
         } else {
-            var frameLengthSlots = Math.floor(slotsPerBitPerSampleByLayerIndex[layerIndex] * bitrate / samplingFrequency)
-                    + if (hasPadding) 1 else 0;
+            var frameLengthSlots = Math.floor(slotsPerBitPerSampleByLayerIndexByVersionIndex[versionIndex][layerIndex]
+                    * bitrate / samplingFrequency);
+
+             if (hasPadding) {
+                frameLengthSlots += 1;
+            }
 
             var frameLengthBytes = frameLengthSlots * slotSizeByLayerIndex[layerIndex];
 

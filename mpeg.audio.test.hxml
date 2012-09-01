@@ -5,6 +5,7 @@
 -main mpeg.audio.TestMain
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
+-resource test-resources/Sad.mp3@Sad.mp3
 --no-inline
 -D fdb
 -debug
@@ -16,6 +17,7 @@
 -main mpeg.audio.TestMain
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
+-resource test-resources/Sad.mp3@Sad.mp3
 --no-inline
 -debug
 --next
@@ -26,6 +28,7 @@
 -main mpeg.audio.TestMain
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
+-resource test-resources/Sad.mp3@Sad.mp3
 --no-inline
 -debug
 --next
@@ -36,6 +39,7 @@
 -main mpeg.audio.TestMain
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
+-resource test-resources/Sad.mp3@Sad.mp3
 --no-inline
 -debug
 --next
@@ -46,6 +50,7 @@
 -main mpeg.audio.TestMain
 -D haxe3
 -resource test-resources/acsloop-lame.mp3@acsloop-lame.mp3
+-resource test-resources/Sad.mp3@Sad.mp3
 --no-inline
 -debug
 --next
