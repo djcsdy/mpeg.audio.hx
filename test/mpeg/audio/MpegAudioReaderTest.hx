@@ -704,6 +704,118 @@ class MpegAudioReaderTest extends TestCase {
         assertEquals(inputBytes.length, totalSizeBytes);
     }
 
+    public function testInvalidVersion() {
+        var inputBytes = Bytes.alloc(0x343);
+        inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
+        inputBytes.set(1, inputBytes.get(1) & 0xe7 | 0x8);
+
+        var input = new BytesInput(inputBytes);
+        var reader = new MpegAudioReader(input);
+
+        var i = 0;
+        var element = reader.readNext();
+        while (i < inputBytes.length) {
+            switch (element) {
+                case Unknown(bytes):
+                for (j in 0...bytes.length) {
+                    assertEquals(inputBytes.get(i), bytes.get(j));
+                    ++i;
+                }
+                element = reader.readNext();
+
+                default:
+                throw "Expected 'Unknown', but saw '" + element + "'";
+            }
+        }
+
+        assertEquals(inputBytes.length, i);
+        assertEquals(Element.End, element);
+    }
+
+    public function testInvalidLayer() {
+        var inputBytes = Bytes.alloc(0x343);
+        inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
+        inputBytes.set(1, inputBytes.get(1) & 0xf9);
+
+        var input = new BytesInput(inputBytes);
+        var reader = new MpegAudioReader(input);
+
+        var i = 0;
+        var element = reader.readNext();
+        while (i < inputBytes.length) {
+            switch (element) {
+                case Unknown(bytes):
+                for (j in 0...bytes.length) {
+                    assertEquals(inputBytes.get(i), bytes.get(j));
+                    ++i;
+                }
+                element = reader.readNext();
+
+                default:
+                throw "Expected 'Unknown', but saw '" + element + "'";
+            }
+        }
+
+        assertEquals(inputBytes.length, i);
+        assertEquals(Element.End, element);
+    }
+
+    public function testInvalidBitrate() {
+        var inputBytes = Bytes.alloc(0x343);
+        inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
+        inputBytes.set(2, inputBytes.get(2) | 0xf0);
+
+        var input = new BytesInput(inputBytes);
+        var reader = new MpegAudioReader(input);
+
+        var i = 0;
+        var element = reader.readNext();
+        while (i < inputBytes.length) {
+            switch (element) {
+                case Unknown(bytes):
+                for (j in 0...bytes.length) {
+                    assertEquals(inputBytes.get(i), bytes.get(j));
+                    ++i;
+                }
+                element = reader.readNext();
+
+                default:
+                throw "Expected 'Unknown', but saw '" + element + "'";
+            }
+        }
+
+        assertEquals(inputBytes.length, i);
+        assertEquals(Element.End, element);
+    }
+
+    public function testInvalidSamplingFrequency() {
+        var inputBytes = Bytes.alloc(0x343);
+        inputBytes.blit(0, haxe.Resource.getBytes("acsloop-lame.mp3"), 0x343, 0x343);
+        inputBytes.set(2, inputBytes.get(2) | 0x0c);
+
+        var input = new BytesInput(inputBytes);
+        var reader = new MpegAudioReader(input);
+
+        var i = 0;
+        var element = reader.readNext();
+        while (i < inputBytes.length) {
+            switch (element) {
+                case Unknown(bytes):
+                for (j in 0...bytes.length) {
+                    assertEquals(inputBytes.get(i), bytes.get(j));
+                    ++i;
+                }
+                element = reader.readNext();
+
+                default:
+                throw "Expected 'Unknown', but saw '" + element + "'";
+            }
+        }
+
+        assertEquals(inputBytes.length, i);
+        assertEquals(Element.End, element);
+    }
+
     function assertSequenceEquals<T>(expected:Iterable<T>, actual:Iterable<T>) {
         var expectedIterator = expected.iterator();
         var actualIterator = actual.iterator();

@@ -196,6 +196,14 @@ class MpegAudioReader {
 
         var version = versions[versionIndex];
         var layer = layers[layerIndex];
+
+        if (version == null || layer == null) {
+            // This isn't a valid frame.
+            // Seek for another frame starting from the byte after the bogus syncword.
+            state = MpegAudioReaderState.Seeking;
+            return yieldUnknown(1);
+        }
+
         var bitrate = switch (version) {
             case Version1: version1Bitrates[layerIndex][bitrateIndex];
             case Version2, Version25: version2Bitrates[layerIndex][bitrateIndex];
@@ -204,8 +212,7 @@ class MpegAudioReader {
         var mode = modes[modeIndex];
         var emphasis = emphases[emphasisIndex];
 
-        if (version == null || layer == null || bitrate == null
-                || samplingFrequency == null || emphasis == null) {
+        if (bitrate == null || samplingFrequency == null || emphasis == null) {
             // This isn't a valid frame.
             // Seek for another frame starting from the byte after the bogus syncword.
             state = MpegAudioReaderState.Seeking;
