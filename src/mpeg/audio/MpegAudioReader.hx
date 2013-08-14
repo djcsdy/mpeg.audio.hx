@@ -121,22 +121,19 @@ class MpegAudioReader {
     }
 
     public function readNext() {
-        switch (state) {
-            case Start, Seeking:
-            return seek();
+        var element:Element = null;
 
-            case Info(info):
-            return infoTagGaplessInfo(info);
-
-            case  Frame:
-            return frame();
-
-            case End:
-            return end();
-
-            case Ended:
-            throw new Eof();
+        while (element == null) {
+            element = switch (state) {
+                case Start, Seeking: seek();
+                case Info(info): infoTagGaplessInfo(info);
+                case Frame: frame();
+                case End: end();
+                case Ended: throw new Eof();
+            }
         }
+
+        return element;
     }
 
     function seek() {
@@ -319,6 +316,11 @@ class MpegAudioReader {
     }
 
     function infoTagGaplessInfo(info:Info) {
+        if (info.frameData.length < info.infoStartIndex + 0x90) {
+            state = MpegAudioReaderState.Seeking;
+            return null;
+        }
+
         var b0 = info.frameData.get(info.infoStartIndex + 0x8d);
         var b1 = info.frameData.get(info.infoStartIndex + 0x8e);
         var b2 = info.frameData.get(info.infoStartIndex + 0x8f);

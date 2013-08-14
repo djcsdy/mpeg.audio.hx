@@ -816,6 +816,82 @@ class MpegAudioReaderTest extends TestCase {
         assertEquals(Element.End, element);
     }
 
+    public function testShortXingTag() {
+        var inputBytes = haxe.Resource.getBytes("short-xing-tag.mp3");
+
+        var input = new BytesInput(inputBytes);
+
+        var reader = new MpegAudioReader(input);
+
+        var totalSizeBytes = 0;
+        var totalUnknownBytes = 0;
+
+        var element:Element;
+
+        while (totalUnknownBytes < 3) {
+            element = reader.readNext();
+            switch (element) {
+                case Unknown(bytes):
+                totalUnknownBytes += bytes.length;
+                totalSizeBytes += bytes.length;
+
+                default:
+                throw "Expected 'Unknown', but saw '" + element + "'";
+            }
+        }
+        assertEquals(33, totalUnknownBytes);
+
+        element = reader.readNext();
+        switch (element) {
+            case Info(info):
+            assertEquals(Layer.Layer3, info.header.layer);
+            assertFalse(info.header.hasCrc);
+            assertEquals(48000, info.header.bitrate);
+            assertEquals(44100, info.header.samplingFrequency);
+            assertFalse(info.header.hasPadding);
+            assertFalse(info.header.privateBit);
+            assertEquals(Mode.Stereo, info.header.mode);
+            assertEquals(0, info.header.modeExtension);
+            assertFalse(info.header.copyright);
+            assertFalse(info.header.original);
+            assertEquals(Emphasis.None, info.header.emphasis);
+            assertEquals(36, info.infoStartIndex);
+            assertEquals(156, info.frameData.length);
+            totalSizeBytes += info.frameData.length;
+
+            default:
+            throw "Expected 'Info', but saw '" + element + "'";
+        }
+
+        element = reader.readNext();
+        switch (element) {
+            case Frame(frame):
+            assertEquals(Layer.Layer3, frame.header.layer);
+            assertFalse(frame.header.hasCrc);
+            assertEquals(128000, frame.header.bitrate);
+            assertEquals(44100, frame.header.samplingFrequency);
+            assertEquals(false, frame.header.hasPadding);
+            assertFalse(frame.header.privateBit);
+            assertEquals(Mode.JointStereo, frame.header.mode);
+            assertTrue(frame.header.modeExtension == 0 || frame.header.modeExtension == 2);
+            assertFalse(frame.header.copyright);
+            assertTrue(frame.header.original);
+            assertEquals(Emphasis.None, frame.header.emphasis);
+            assertEquals(417, frame.frameData.length);
+            totalSizeBytes += frame.frameData.length;
+
+            default:
+            throw "Expected 'Frame', but saw '" + element + "'";
+        }
+
+        element = reader.readNext();
+        if (element != Element.End) {
+            throw "Expected 'End', but saw '" + element + "'";
+        }
+
+        assertEquals(inputBytes.length, totalSizeBytes);
+    }
+
     function assertSequenceEquals<T>(expected:Iterable<T>, actual:Iterable<T>) {
         var expectedIterator = expected.iterator();
         var actualIterator = actual.iterator();
