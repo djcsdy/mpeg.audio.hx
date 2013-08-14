@@ -5,7 +5,7 @@ A library for reading MPEG Audio (“MP3”) metadata.
 
 ## License and Copyright Information
 
-Copyright © 2012 Daniel J. Cassidy.
+Copyright © 2012–2013 Daniel J. Cassidy.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the “Software”), to deal
